@@ -1,0 +1,57 @@
+\documentclass[11pt, oneside]{article}   	% use "amsart" instead of "article" for AMSLaTeX format
+\usepackage{geometry}                		% See geometry.pdf to learn the layout options. There are lots.
+\usepackage{eurosym}
+\geometry{letterpaper}                   		% ... or a4paper or a5paper or ... 
+%\geometry{landscape}                		% Activate for for rotated page geometry
+%\usepackage[parfill]{parskip}    		% Activate to begin paragraphs with an empty line rather than an indent
+\usepackage{graphicx}				% Use pdf, png, jpg, or eps§ with pdflatex; use eps in DVI mode
+								% TeX will automatically convert eps --> pdf in pdflatex		
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{systeme}
+\usepackage{mathabx}
+\usepackage{siunitx}
+
+\renewcommand{\baselinestretch}{1.5}
+
+\title{39. Bundeswettbewerb Informatik \\ 1.Runde}
+\author{C. V. Esteban}
+
+\begin{document}
+\maketitle
+
+\section*{Aufgabe 1: W\"orter aufr\"aumen}
+Opa J\"urgen bl\"attert in einer Zeitschrift aus der Apotheke und findet ein R\"atsel. Es ist eine Liste von W\"ortern gegeben, die in die richtige Reihen- folge gebracht werden sollen, so dass sie eine lustige Geschichte ergeben. Leerzeichen und Satz- zeichen sowie einige Buchstaben sind schon vor- gegeben.  \\
+\begin{centering}
+"Oh je, was f\"ur eine Arbeit", sagt Opa J\"urgen.  \\ 
+"Kein Problem" erwidert seine Enkelin Lotta.  \\
+"Der Computer kann es doch f\"ur uns machen"  \\
+\end{centering}
+Hilf den beiden und schreibe ein Programm, das einen l\"uckentext und eine Liste von W\"ortern einliest und anschlie{\ss}end den vervollst\"andigten Text ausgibt. Du kannst davon ausgehen, dass es nur eine richtige L\"osung gibt.
+
+\section*{Aufgabe 2: Dreieckspuzzle}
+Lizzy hat ein Dreieckspuzzle geschenkt bekommen. Es besteht aus neun dreieckigen Teilen. Auf den einzelnen Teilen sind Figuren abgebildet, aber immer nur zur H\"alfte.
+Die Teile sollen zu einem gro{\ss}en Dreieck zusam- mengesetzt werden, und zwar so, dass die Figuren- h\"alften zueinander passen. Nach einigem Probieren hat Lizzy eine L\"osung gefunden ? siehe unten.  \\
+Lizzy lernt gerade programmieren und denkt sich: ?Bestimmt kann das Puzzle auch mit einem Computerprogramm gel\"ost werden. Und das Programm schreibe ich gleich so, dass es auch andere Dreieckspuzzles mit neun Teilen l\"osen kann: mit mehr verschiedenen und anders angeordneten Figuren.? \\
+Schreibe ein Programm, das Dreieckspuzzles l\"osen kann. Es soll zun\"achst die Beschreibung eines Puzzles einlesen. F\"ur das eingelesene Puzzle soll es entscheiden, ob es eine L\"osung gibt und, falls ja, eine L\"osung ausgeben.
+
+\section*{Aufgabe 3: Tobis Turnier}
+Tobi veranstaltet f\"ur seine Freunde ein Turnier f\"ur das Zweipersonenspiel RNG. Bei einer Partie RNG gewinnt nicht immer der bessere Spieler.  \\
+Deshalb fragt sich Tobi, wie er das Turnier durch- f\"uhren sollte. Er k\"onnte beispielsweise eine Liga durchf\"uhren oder im K.o.-System spielen lassen. Nun m\"ochte er herausfinden, welche Turniervariante sich am besten eignet, um den insgesamt besten Spieler herauszufinden. \\
+Tobi \"uberlegt sich folgendes Zufallsexperiment, um ein Spiel bez\"uglich seines Ausgangs zu simulieren: Jeder Spieler hat eine Spielst\"arke, die durch eine Zahl zwischen 0 und 100 ausgedr\"uckt wird. Beide Spieler legen Kugeln in eine Urne, und zwar so viele, wie ihre Spielst\"arke hoch ist. Dann wird eine Kugel zuf\"allig aus der Urne gezogen, wobei jede Kugel die gleiche Chance hat. Der Besitzer der ge- zogenen Kugel gewinnt das Spiel.  \\
+Schreibe ein Programm, das die Spielst\"arken der Spieler ein- liest und f\"ur jede dieser Turniervarianten ermittelt, wie oft der spielst\"arkste Spieler im Durchschnitt \"uber viele Wiederholungen des Turniers gewinnt.  \\
+Empfiehl Tobi eine Turniervariante auf Grundlage deiner Ergebnisse.
+
+\section*{Aufgabe 4: Streichholzr\"atsel}
+Will man eine Anordnung von Streichh\"olzern in eine andere \"uberf\"uhren, kann man manchmal Arbeit sparen, indem einige Streichh\"olzer einfach liegen bleiben. Z. B. kann die linke untere Anordnung dadurch in die rechte \"uberf\"uhrt werden, dass drei Streichh\"olzer auf neue Positionen gelegt werden.  \\
+Ein Streichholzr\"atsel besteht darin, dass man aus- gehend von einer zusammenh\"angenden Anordnung von Streichh\"olzern auf einem Tisch durch das Umlegen einer bestimmten Anzahl von Streich- h\"olzern zu einer anderen zusammenh\"angenden Anordnung gelangen soll.  \\
+Alle Streichh\"olzer gelten dabei als gerade und gleich lang, und es ist immer egal, wo sich der ?Kopf? eines Streichholzes befindet. Die Streichh\"olzer ber\"uhren sich nur an ihren Enden und kreuzen sich nicht. Jedes Streichholz liegt auf einer gedachten Geraden, welche mit einer Tischkante einen Winkel bildet, der ein Vielfaches von $\ang{30}$ ist.  \\
+Definiere ein geeignetes Format zur Darstellung solcher Streichholzanordnungen im Rechner.  \\
+Schreibe ein Programm, das zwei in deinem Format vorliegenden Streichholzanordnungen und eine Anzahl umzulegender Streichh\"olzer als Eingabe nimmt und berechnet, ob das R\"atsel l\"osbar ist. Falls das R\"atsel l\"osbar ist, soll ausgegeben werden, welche Streichh\"olzer wie umgelegt werden m\"ussen.
+
+\section*{Aufgabe 5: Wichteln}
+Pirmins Klasse m\"ochte dieses Jahr zu Weihnachten eine besondere Variante des Wichtelns durchf\"uhren. Dabei bringt jeder genau einen Gegenstand mit. Alle Gegenst\"ande werden nummeriert und auf einer Theke mit ihrer jeweiligen Nummer ausgestellt. Anschlie{\ss}end notiert jeder bzw. jede auf einem Zettel, welcher der ausgestellten Gegenst\"ande ihm oder ihr am besten, am zweit- bzw. am drittbesten gef\"allt. Die Zettel werden dann gesammelt. \\
+In der letzten Informatikstunde vor Weihnachten sollen die Gegenst\"ande m\"oglichst gut an die Sch\"ule- rinnen und Sch\"uler verteilt werden. Eine Verteilung ist besser als eine andere Verteilung, wenn die Anzahl der ersten W\"unsche, die erf\"ullt werden, h\"oher ist als bei der anderen Verteilung. Ist diese Anzahl bei beiden Verteilungen gleich, entscheidet die Anzahl der zweiten W\"unsche, die erf\"ullt sind. Ist auch diese Anzahl gleich, ist die Anzahl der erf\"ullten dritten W\"unsche ausschlaggebend. Ist diese eben- falls gleich, gelten die Verteilungen als gleich gut. \\
+Schreibe ein Programm, das solche W\"unsche von Sch\"ulerinnen und Sch\"ulern einliest und eine m\"oglichst gute Verteilung gem\"a{\ss} der obigen Definition ausgibt.
+
+\end{document}
