@@ -1,0 +1,102 @@
+import java.util.Random;
+public class TurnierAufsicht
+{
+    public int liga(int[] spieletaerkeTeilnehmer)
+    {
+        int[] siege = new int[spieletaerkeTeilnehmer.length + 1];
+        int max = -1;
+        for (int i = 0; i < spieletaerkeTeilnehmer.length; i ++)
+        {
+            for (int j = i + 1; j < spieletaerkeTeilnehmer.length; j ++)
+            {
+                double RGN = Math.random();
+                int nenner = spieletaerkeTeilnehmer[i] + spieletaerkeTeilnehmer[j];
+                int zaehler = spieletaerkeTeilnehmer[i];
+                if( RGN < ((double)zaehler / nenner))
+                {
+                    siege[i + 1] ++;                    
+                }
+                else
+                {
+                    siege[j + 1] ++;
+                }
+            }
+        }
+        for (int i = 1; i <= spieletaerkeTeilnehmer.length; i ++)
+        {
+            if( max < siege[i])
+            {
+                max = i;
+            }
+        }
+        return max;
+    }
+
+    public int ko(int[] spieletaerkeTeilnehmer, int[] turnierplan)
+    {
+        int[] siege = new int[spieletaerkeTeilnehmer.length + 1];
+        int max = -1;
+        for(int i = 0; i < spieletaerkeTeilnehmer.length; i += 2)
+        {
+            double RGN = Math.random();
+            int zaehler = spieletaerkeTeilnehmer[i];
+            int nenner = spieletaerkeTeilnehmer[i] + spieletaerkeTeilnehmer[i + 1];
+            if(RGN < ((double)zaehler / nenner))
+            {
+                siege[i + 1] ++;
+            }
+            else
+            {
+                siege[i + 2] ++; 
+            }
+        }
+        for (int i = 1; i <= spieletaerkeTeilnehmer.length; i ++)
+        {
+            if( max < siege[i]) 
+            {
+                max = i;
+            }
+        }
+        return max;
+    }
+
+    public int koXfuenf(int[] spieletaerkeTeilnehmer, int[] turnierplan)
+    {
+        int[] siege = new int[spieletaerkeTeilnehmer.length + 1];
+        int[] siegeGesamt = new int[spieletaerkeTeilnehmer.length + 1];
+        int max = -1;
+        for(int i = 0; i < spieletaerkeTeilnehmer.length; i += 2)
+        {
+            for (int runden = 0; runden < 5; runden ++)
+            {
+                double RGN = Math.random();
+                int zaehler = spieletaerkeTeilnehmer[i];
+                int nenner = spieletaerkeTeilnehmer[i] + spieletaerkeTeilnehmer[i + 1];
+                if(RGN < ((double)zaehler / nenner))
+                {
+                    siege[i + 1] ++;
+                }
+                else
+                {
+                    siege[i + 2] ++; 
+                }
+            }
+            if(siege[i + 1] > siege[i + 2])
+            {
+                siegeGesamt[i + 1] ++;
+            }
+            else
+            {
+                siegeGesamt[i + 2] ++;
+            }
+        }
+        for (int i = 1; i <= spieletaerkeTeilnehmer.length; i ++)
+        {
+            if( max < siegeGesamt[i]) 
+            {
+                max = i;
+            }
+        }
+        return max;
+    }
+}
