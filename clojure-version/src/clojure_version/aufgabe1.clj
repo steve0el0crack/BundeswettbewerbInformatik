@@ -1,5 +1,6 @@
-(ns clojure-version.core
-  (:require [clojure.java.io :as io]))
+(ns clojure-version.core 
+  (:require [clojure.java.io :as io]
+            [clojure.tools :as tools]))
 
 ;; AUFGABE 1: Woerter aufraeumen 
 
@@ -29,6 +30,8 @@
                     (clojure.string/split #" "))
      :accents accent}))
 start
+
+(spy)
 
 ;; Will contain two dictionaries (Hashmaps) in a list: The first for the incomplete words and the second for the complete ones.
 ;; This will be the structure: [{"___e" : 4, "__d" : 3, ...} {"eine" : 4, "und" : 3, ...}]
@@ -69,31 +72,9 @@ first-filter
 (def xf
   (comp
    (filter #(= (second %1) 1))
-   (map #(first %1))))
+   (map first)))
 
-(transduce xf + [[:b 1] [:a 2]])
-
-(+ [11 4 5])
-
-(def xf
-  (comp
-   (filter #(not= (rem %1 2) 0))
-   (map inc)))
-
-(transduce xf + [0 1 2 3 4])
-(range 5)
-
-(def xf
-  (comp
-   (filter #(not= (rem (count %1) 2) 0))
-   (map inc)))
-
-(transduce xf + [[:a 0] [:b 1] [:c 2] [:d 3] [:e 4]])
-
-
-
-
-(filter #(if (= (second %1) 1) (first %1)) coll)
+(transduce xf conj [] coll)
 
 (def second-filtered (remove #(= (count (first %1)) 1) first-filtered))  ;; only cases in which there are various possibilities for a match.
 
