@@ -1,6 +1,5 @@
 (ns clojure-version.core 
-  (:require [clojure.java.io :as io]
-            [clojure.tools :as tools]))
+  (:require [clojure.java.io :as io]))
 
 ;; AUFGABE 1: Woerter aufraeumen 
 
@@ -31,11 +30,13 @@
      :accents accent}))
 start
 
-(spy)
-
 ;; Will contain two dictionaries (Hashmaps) in a list: The first for the incomplete words and the second for the complete ones.
 ;; This will be the structure: [{"___e" : 4, "__d" : 3, ...} {"eine" : 4, "und" : 3, ...}]
-  
+
+(def search-map-by-val
+  (comp
+   (filter #(= (second %1) 1))
+   (map first)))
 
 (def first-filter
   (letfn [(label []
@@ -48,53 +49,25 @@ start
                  [first second]))
           (solvable? []
             (apply = (map (fn [a b] (= a b)) (first (freq)) (second (freq)))))
-          (solved []  
-            (if (solvable?)
-              (filter (fn [x] (if (= (second x) 1))) (first freq)) ;; [[11 1] [9 1] [8 1]] and then must I go into each list again and extract the 11, 9 and 8?!
-              nil))
-          (unique-set []
-            (apply clojure.set/union
-                   (map (fn [f]
-                          (set (vals (f labeled))))
-                        [first second])))
-          (wrap [n]
+          (solved [] (if (solvable?) (set (transduce search-map-by-val conj [] (first (freq)))) #{}))
+          (unique-set [] (set (keys (first (freq)))))
+          (wrap [n] ;; wrap can be implemented only changing a parameter in search-map-by-val
            (map (fn [f]
                    (map first
                         (filter #(= (last %1) n)
-                                (f labeled))))
+                                (f (label)))))
                 [first second]))]
-    (apply hash-map (mapcat #(wrap %1) (unique-set)))))
-
-first-filter
-
-(def coll {:a 1 :b 3 :c 4 :d 5})
-
-(def xf
-  (comp
-   (filter #(= (second %1) 1))
-   (map first)))
-
-(transduce xf conj [] coll)
-
-(def second-filtered (remove #(= (count (first %1)) 1) first-filtered))  ;; only cases in which there are various possibilities for a match.
+    (let [[not-ready ready] (map (fn [a]
+                                   (apply hash-map
+                                          (mapcat #(wrap %1) a)))
+                                 [(clojure.set/difference (unique-set) (solved))
+                                  (solved)])]
+      {:ready ready ;; ... of the form {("a_s")(aus)} there is only one combination.
+       :not-ready not-ready})))
 
 (defn fitness
   [a b]
   (reduce + (map #(if (= %2 %1) 1 0) a b)))
-
-(def test
-  (mapcat (fn [a]
-        (map (fn [i]
-               (let [best (reduce-map
-                           (apply hash-map
-                                  (mapcat (fn [x]
-                                            [x (fitness x i)])
-                                          (second a))))]
-                 {i (first best)}))
-             (first a)))
-       first-filter))
-
-(count test)
 
 (defn reduce-map
   [coll]
@@ -104,5 +77,20 @@ first-filter
                  a))
              [:start 0]
              coll))
+
+(def second-filter
+  (apply assoc {} (flatten (mapcat (fn [a]
+                                     (map (fn [i]
+                                            (let [best (reduce-map
+                                                        (apply hash-map
+                                                               (mapcat (fn [x]
+                                                                         [x (fitness x i)])
+                                                                       (second a))))]
+                                              [i (first best)]))
+                                          (first a)))
+                                   (:not-ready first-filter)))))
+
+(count (conj second-filter (apply assoc {} (mapcat flatten (:ready first-filter)))))
+
 
 
