@@ -3,7 +3,6 @@
 
 ;; AUFGABE 1: Woerter aufraeumen 
 
-;; I think I could use some "transducer" for this process pipeline...
 (def start
   (let [file (with-open [rdr (clojure.java.io/reader (io/resource "clojure_version/aufgabe1sample.txt"))]
                (reduce conj [] (line-seq rdr))) 
@@ -28,10 +27,6 @@
      :completes (-> (second file)
                     (clojure.string/split #" "))
      :accents accent}))
-start
-
-;; Will contain two dictionaries (Hashmaps) in a list: The first for the incomplete words and the second for the complete ones.
-;; This will be the structure: [{"___e" : 4, "__d" : 3, ...} {"eine" : 4, "und" : 3, ...}]
 
 (def search-map-by-val
   (comp
@@ -65,32 +60,45 @@ start
       {:ready ready ;; ... of the form {("a_s")(aus)} there is only one combination.
        :not-ready not-ready})))
 
-(defn fitness
-  [a b]
-  (reduce + (map #(if (= %2 %1) 1 0) a b)))
-
-(defn reduce-map
-  [coll]
-  (reduce-kv (fn [a b c]
-               (if (> c (second a))
-                 [b c]
-                 a))
-             [:start 0]
-             coll))
-
 (def second-filter
-  (apply assoc {} (flatten (mapcat (fn [a]
-                                     (map (fn [i]
-                                            (let [best (reduce-map
-                                                        (apply hash-map
-                                                               (mapcat (fn [x]
-                                                                         [x (fitness x i)])
-                                                                       (second a))))]
-                                              [i (first best)]))
-                                          (first a)))
-                                   (:not-ready first-filter)))))
+  (letfn [(fitness [a b]
+            (reduce + (map #(if (= %2 %1) 1 0) a b)))
+          (reduce-map [coll]
+            (reduce-kv (fn [a b c] (if (> c (second a)) [b c] a)) [:start 0] coll))
+          (evaluate [word coll ]
+            (apply hash-map (mapcat (fn [x] [x (fitness x word)]) coll)))
+          (normalize [coll]
+            (apply assoc {} coll))
+          (categorize [group]
+            (let [incompletes (first group)
+                  completes (second group)]
+              (map (fn [i-word]
+                     (let [best (reduce-map (evaluate i-word completes))]
+                       [i-word (first best)]))
+                   incompletes)))]
+    (let [[first-part second-part] (map normalize
+                                        [(mapcat flatten (:ready first-filter))
+                                         (->> (mapcat categorize (:not-ready first-filter))
+                                              (flatten))])]
+      (conj first-part second-part))))
 
-(count (conj second-filter (apply assoc {} (mapcat flatten (:ready first-filter)))))
+(defn write-file []
+  (with-open [wrtr (clojure.java.io/writer (io/resource "clojure_version/aufgabe1sample.txt") :append true)]
+    (.write wrtr "hello")))
+
+(write-file)
+second-filter
+
+(defn foo [coll]
+  (if (not= coll '())
+    (cons (second-filter (first coll)) (foo (rest coll)))
+    nil))
+(foo (:incompletes start))
+
+(map (fn [w]
+       (let [accent (re-find #"[,;:.]" w)]
+         (update second-filter (clojure.string/replace w #"[,;:.]" "") #(str % accent))))
+     (:accents start))
 
 
 
