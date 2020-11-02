@@ -4,91 +4,89 @@
 ;; AUFGABE 1: Woerter aufraeumen 
 
 ;; I think I could use some "transducer" for this process pipeline...
-(defn start []
+(def start
   (let [file (with-open [rdr (clojure.java.io/reader (io/resource "clojure_version/aufgabe1sample.txt"))]
-               (reduce conj [] (line-seq rdr)))
-        readed (map (fn [string]
-                      (-> string
-                          (clojure.string/split #" "))) ;; converting into single elements of a list
-                    file)
-        punctuated (filter #(not= (count (re-find #"[,;:.]" %1)) 0) (first readed))
-        depured (into [] (map #(clojure.string/replace %1 #"[,;:.]" "") (first readed)))]
-    [readed punctuated depured (second readed)]))
-
-(start)
-
+               (reduce conj [] (line-seq rdr))) 
+        [readed accent] (loop [i 0
+                               pool (-> (first file)
+                                        (clojure.string/split #" ")) ;; 20 elements...
+                               readed []
+                               accent []]
+                          (if (= i (count (-> (first file)
+                                              (clojure.string/split #" "))))
+                            [readed accent]
+                            (if (re-find #"[,;:.]" (first pool))
+                              (recur (inc i)
+                                     (rest pool)
+                                     (conj readed (clojure.string/replace (first pool) #"[,;:.]" ""))
+                                     (conj accent (first pool)))
+                              (recur (inc i)
+                                     (rest pool)
+                                     (conj readed (first pool))
+                                     accent))))]
+    {:incompletes readed
+     :completes (-> (second file)
+                    (clojure.string/split #" "))
+     :accents accent}))
+start
 
 ;; Will contain two dictionaries (Hashmaps) in a list: The first for the incomplete words and the second for the complete ones.
 ;; This will be the structure: [{"___e" : 4, "__d" : 3, ...} {"eine" : 4, "und" : 3, ...}]
 (def counted
   (map (fn [f]
-         (apply hash-map
-                (mapcat (fn [x]
-                          [x (count x)]) ;; if otherwise (first the number of characters and then the word), the function hash-map would crash multiple values onto 1 key and words would be lost.
-                        (f (rest (rest (start)))))))
-       [first second]))  ;; length of each string, for text and words as a hash-map.
+         (apply hash-map (mapcat (fn [x] [x (count x)]) (f start))))
+       [:incompletes :completes]))  
 
+;; Decision procedure: Equal number of incomplete and complete words with same length.
+(def solution?
+  (let [coll (map (fn [f]
+                    (frequencies (vals (f counted))))
+                  [first second])]
+    (apply = (map (fn [a b] (= a b)) (first coll) (second coll)))))
 
+(def first-filter
+  (letfn [(unique-set []
+            (apply clojure.set/union
+                   (map (fn [f]
+                          (set (vals (f counted))))
+                        [first second])))
+          (wrap [n]
+           (map (fn [f]
+                   (map first
+                        (filter #(= (last %1) n)
+                                (f counted))))
+                [first second]))]
+    (apply hash-map (mapcat #(wrap %1) (unique-set)))))
 
-
-counted
-;; Counting how many complete/incomplete words of length "x" there is.
-;; [{7 : 2, 5 : 4, ...} {7 : 2, 5 : 4, ...}] (meaning that there is 2 incomplete words of length 7 and 4 of length 5. And 2 complete words of length 7, and 4 of length 5)
-;; This could be the "decision procedure" for not going into any computation: If there is a missmatch in these numbers, then there will be no solution.
-(def freq
-  (map (fn [f]
-         (frequencies (vals (f counted))))
-       [first second]))
-freq
-
-;; In order to sort both kinds of words (complete and incomplete) under some common criteria: Length.
-;; Starting to stablish relationships between the two groups.
-;; #{ 1 2 3 4 5... Ni} such that any N(i) = N(j)  
-(def unique-set
-  (apply clojure.set/union
-         (map (fn [f]
-                (set (vals (f counted))))
-              [first second])))  ;; In general, which are the sizes of my "strings" (text/words).
-
-;; For any given "n" (possible length of a word), the words corresponding to this length are going to be "wrapped" out of their corresponding groups.
-;; [["___e", "o__r"]["eine", "oder"]] (would be for example "(wrap 4)")
-(defn wrap [n]
-  (map (fn [f]
-         (map first
-              (filter #(= (last %1) n)
-                      (f counted))))
-       [first last]))
-
-(def first-filtered (apply hash-map (mapcat #(wrap %1) unique-set)))
+first-filter
 
 (def second-filtered (remove #(= (count (first %1)) 1) first-filtered))  ;; only cases in which there are various possibilities for a match.
 
-(defn second-filter
+(defn fitness
   [a b]
-  (if (= (count a) (count b))  ;; das kann ich vorher machen!
-    (reduce + (map #(if (= %2 %1) 1 0) a b))
-    0))
+  (reduce + (map #(if (= %2 %1) 1 0) a b)))
 
-(def complete-mapping
-  (apply conj ;; at the end every {"___" "xyz"} will be reduced into one big map!
-         (mapcat
-          (fn [pareo] ;; receives ['("__l__" "_r") '("hello" "er")]
-            (map
-             (fn [goal] ;; receives '("__l__" "_r")
-               (let [fitness (apply hash-map 
-                                    (flatten
-                                     (for [i (second pareo)] [(second-filter i goal) i]) ;; fuer jedes Lueckenwort wird das folgendes generiert: [x "hello" y "er"] Where x und y is the evaluation of the second-filter.
-                                     ))
-                     punctuated (first (filter #(= goal (clojure.string/replace %1 #"[,;:.]" "")) (first (rest (start)))))
-                     complete-word (last (last (sort fitness)))]
-                 (if (not= (count punctuated) 0)  ;; that means that the word I trying to "resolve" now, was initially punctuated!
-                   {punctuated (apply str complete-word (str (last punctuated)))} 
-                   {goal complete-word}) ;; Then, the complete word with more fitness will be mapped with the lueckenwort
-                 ))
-             (first pareo)))
-          first-filtered)))
+(def test
+  (mapcat (fn [a]
+        (map (fn [i]
+               (let [best (reduce-map
+                           (apply hash-map
+                                  (mapcat (fn [x]
+                                            [x (fitness x i)])
+                                          (second a))))]
+                 {i (first best)}))
+             (first a)))
+       first-filter))
 
-(clojure.string/join
- " "
- (map #(complete-mapping %1)
-      (first (rest (rest (start))))))
+(count test)
+
+(defn reduce-map
+  [coll]
+  (reduce-kv (fn [a b c]
+               (if (> c (second a))
+                 [b c]
+                 a))
+             [:start 0]
+             coll))
+
+
