@@ -32,33 +32,68 @@ start
 
 ;; Will contain two dictionaries (Hashmaps) in a list: The first for the incomplete words and the second for the complete ones.
 ;; This will be the structure: [{"___e" : 4, "__d" : 3, ...} {"eine" : 4, "und" : 3, ...}]
-(def counted
-  (map (fn [f]
-         (apply hash-map (mapcat (fn [x] [x (count x)]) (f start))))
-       [:incompletes :completes]))  
-
-;; Decision procedure: Equal number of incomplete and complete words with same length.
-(def solution?
-  (let [coll (map (fn [f]
-                    (frequencies (vals (f counted))))
-                  [first second])]
-    (apply = (map (fn [a b] (= a b)) (first coll) (second coll)))))
+  
 
 (def first-filter
-  (letfn [(unique-set []
+  (letfn [(label []
+            (map (fn [f]
+                   (apply hash-map (mapcat (fn [x] [x (count x)]) (f start))))
+                 [:incompletes :completes]))
+          (freq []
+            (map (fn [f]
+                   (frequencies (vals (f (label)))))
+                 [first second]))
+          (solvable? []
+            (apply = (map (fn [a b] (= a b)) (first (freq)) (second (freq)))))
+          (solved []  
+            (if (solvable?)
+              (filter (fn [x] (if (= (second x) 1))) (first freq)) ;; [[11 1] [9 1] [8 1]] and then must I go into each list again and extract the 11, 9 and 8?!
+              nil))
+          (unique-set []
             (apply clojure.set/union
                    (map (fn [f]
-                          (set (vals (f counted))))
+                          (set (vals (f labeled))))
                         [first second])))
           (wrap [n]
            (map (fn [f]
                    (map first
                         (filter #(= (last %1) n)
-                                (f counted))))
+                                (f labeled))))
                 [first second]))]
     (apply hash-map (mapcat #(wrap %1) (unique-set)))))
 
 first-filter
+
+(def coll {:a 1 :b 3 :c 4 :d 5})
+
+(def xf
+  (comp
+   (filter #(= (second %1) 1))
+   (map #(first %1))))
+
+(transduce xf + [[:b 1] [:a 2]])
+
+(+ [11 4 5])
+
+(def xf
+  (comp
+   (filter #(not= (rem %1 2) 0))
+   (map inc)))
+
+(transduce xf + [0 1 2 3 4])
+(range 5)
+
+(def xf
+  (comp
+   (filter #(not= (rem (count %1) 2) 0))
+   (map inc)))
+
+(transduce xf + [[:a 0] [:b 1] [:c 2] [:d 3] [:e 4]])
+
+
+
+
+(filter #(if (= (second %1) 1) (first %1)) coll)
 
 (def second-filtered (remove #(= (count (first %1)) 1) first-filtered))  ;; only cases in which there are various possibilities for a match.
 
