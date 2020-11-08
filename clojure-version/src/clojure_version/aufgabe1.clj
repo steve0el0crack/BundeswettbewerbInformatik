@@ -62,25 +62,88 @@
 
 (def second-filter
   (letfn [(fitness [a b]
-            (reduce + (map #(if (= %2 %1) 1 0) a b)))
+            (let [v (reduce + (map #(if (and (not= %1 %2)
+                                             (not= %2 (first "_"))
+                                             (not= %1 (first "_")))
+                                      -1
+                                      0)
+                                   a b))]
+              (if (neg? v) 0 1)))
           (reduce-map [coll]
             (reduce-kv (fn [a b c] (if (> c (second a)) [b c] a)) [:start 0] coll))
-          (evaluate [word coll ]
-            (apply hash-map (mapcat (fn [x] [x (fitness x word)]) coll)))
           (normalize [coll]
             (apply assoc {} coll))
-          (categorize [group]
+          (path-finder [group]
             (let [incompletes (first group)
-                  completes (second group)]
-              (map (fn [i-word]
-                     (let [best (reduce-map (evaluate i-word completes))]
-                       [i-word (first best)]))
-                   incompletes)))]
-    (let [[first-part second-part] (map normalize
-                                        [(mapcat flatten (:ready first-filter))
-                                         (->> (mapcat categorize (:not-ready first-filter))
-                                              (flatten))])]
-      (conj first-part second-part))))
+                  completes (second group)
+                  karte (map (fn [x]
+                               (map (fn [y]
+                                      (fitness x y))
+                                    completes))
+                             incompletes)]
+              karte))]
+    (comment (let [[first-part second-part] (map normalize
+                                                 [(mapcat flatten (:ready first-filter))
+                                                  (->> (mapcat categorize (:not-ready first-filter))
+                                                       (flatten))])]
+               (conj first-part second-part)))
+    (path-finder (nth (map (fn [_] _) (:not-ready first-filter)) 3))))
+
+first-filter
+second-filter
+
+(def test
+  (for [a (range 3)]
+    (for [b (range 3)]
+      (rand-int 2))))
+
+(defn paolo
+  [x]
+  (comp
+   (map-indexed (fn [i e] [i (nth e x)]))
+   (filter #(pos? (second %1)))
+   (map first )))
+
+(transduce (paolo 1) conj [] [[0 0 0] [1 0 1] [1 0 1]])
+
+(nth "hello" 3)
+
+(defn find-path
+  [grid]
+  (loop [h []
+         i 0
+         list (transduce (paolo i) conj [] grid)
+         flag (pos? (count list))]
+    (if (and flag (< (+ i 1) (count grid)))
+      (recur (conj h flag)
+             (+ i 1)
+             (filter pos? (map #(nth %1 (+ i 1)) grid))
+             (pos? (count (filter pos? (map #(nth %1 (+ i 1)) grid)))))
+      (conj h flag))))
+
+(find-path [[0 0 0] [1 0 1] [1 0 1]])
+(find-path test)
+test
+
+
+(defn accents [key-coll]
+  (if (not= key-coll '())
+    (update
+     (zeta (rest key-coll))
+     (clojure.string/replace (first key-coll) #"[,;:.]" "")
+     #(str %1 (re-find #"[,;:.]" (first key-coll))))
+    second-filter))
+
+(defn order [coll]
+  (if (not= coll '())
+    (cons (second-filter (first coll)) (foo (rest coll)))
+    nil))
+
+(order (:incompletes start))
+(count second-filter)
+start
+first-filter
+
 
 (defn write-file []
   (with-open [wrtr (clojure.java.io/writer (io/resource "clojure_version/aufgabe1sample.txt") :append true)]
@@ -88,17 +151,4 @@
 
 (write-file)
 second-filter
-
-(defn foo [coll]
-  (if (not= coll '())
-    (cons (second-filter (first coll)) (foo (rest coll)))
-    nil))
-(foo (:incompletes start))
-
-(map (fn [w]
-       (let [accent (re-find #"[,;:.]" w)]
-         (update second-filter (clojure.string/replace w #"[,;:.]" "") #(str % accent))))
-     (:accents start))
-
-
 
