@@ -104,7 +104,7 @@ second-filter
    (filter #(pos? (second %1)))
    (map first )))
 
-(transduce (paolo 1) conj [] [[0 0 0] [1 0 1] [1 0 1]])
+(rand-nth (transduce (paolo 0) conj [] [[0 0 0] [1 0 1] [1 0 1]]))
 
 (nth "hello" 3)
 
@@ -112,14 +112,14 @@ second-filter
   [grid]
   (loop [h []
          i 0
-         list (transduce (paolo i) conj [] grid)
-         flag (pos? (count list))]
+         cc (transduce (paolo i) conj [] grid)
+         flag (pos? (count cc))]
     (if (and flag (< (+ i 1) (count grid)))
-      (recur (conj h flag)
+      (recur (conj h (rand-nth cc))
              (+ i 1)
-             (filter pos? (map #(nth %1 (+ i 1)) grid))
-             (pos? (count (filter pos? (map #(nth %1 (+ i 1)) grid)))))
-      (conj h flag))))
+             (transduce (paolo (+ i 1)) conj [] grid)
+             (pos? (count (transduce (paolo (+ i 1)) conj [] grid))))
+      (conj h (rand-nth list)))))
 
 (find-path [[0 0 0] [1 0 1] [1 0 1]])
 (find-path test)
