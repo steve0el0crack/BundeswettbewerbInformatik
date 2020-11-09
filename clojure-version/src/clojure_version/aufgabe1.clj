@@ -83,48 +83,71 @@
                              incompletes)]
               karte))]
     (comment (let [[first-part second-part] (map normalize
-                                                 [(mapcat flatten (:ready first-filter))
-                                                  (->> (mapcat categorize (:not-ready first-filter))
-                                                       (flatten))])]
+                                          [(mapcat flatten (:ready first-filter))
+                                           (->> (mapcat categorize (:not-ready first-filter))
+                                                (flatten))])]
                (conj first-part second-part)))
-    (path-finder (nth (map (fn [_] _) (:not-ready first-filter)) 3))))
+    ))
 
-first-filter
-second-filter
+(defn grid [a] (map (fn [_] (repeat 3 (rand-int 2))) (range a)))
 
-(def test
-  (for [a (range 3)]
-    (for [b (range 3)]
-      (rand-int 2))))
+(defn seek-places
+  [grid]
+  (letfn [(paolo [x]
+            (comp
+             (map-indexed (fn [i e] [i (nth e x)]))
+             (filter #(pos? (second %1)))
+             (map first)))]
+    (comment (map #(transduce (paolo %1) conj [] grid) (range (count grid))))
+    (transduce (paolo 0) conj [] grid)))
 
-(defn paolo
-  [x]
+(seek-places grid)
+
+(defn paolo [x]
   (comp
    (map-indexed (fn [i e] [i (nth e x)]))
    (filter #(pos? (second %1)))
-   (map first )))
+   (map first)))
 
-(rand-nth (transduce (paolo 0) conj [] [[0 0 0] [1 0 1] [1 0 1]]))
+(transduce  (paolo 0) conj [] [[0 1 0] [0 1 0] [1 0 1]])
+(transduce  (paolo 1) conj [] [[0 1 0] [0 1 0] [1 0 1]])
+(transduce  (paolo 2) conj [] [[0 1 0] [0 1 0] [1 0 1]])
 
-(nth "hello" 3)
+(map first (filter #(pos? (second %1)) (map-indexed (fn [i e] [i (nth e 0)]) [[0 1 0] [0 0 0] [1 0 1]])))
 
-(defn find-path
+(defn update
+  [coll x]
+  (remove #(= %1 x) coll))
+
+(defn path-finder
   [grid]
-  (loop [h []
-         i 0
-         cc (transduce (paolo i) conj [] grid)
-         flag (pos? (count cc))]
-    (if (and flag (< (+ i 1) (count grid)))
-      (recur (conj h (rand-nth cc))
-             (+ i 1)
-             (transduce (paolo (+ i 1)) conj [] grid)
-             (pos? (count (transduce (paolo (+ i 1)) conj [] grid))))
-      (conj h (rand-nth list)))))
+  (loop [i 0
+         candidates (seek-places grid)
+         chosen (rand-nth (nth candidates i))
+         next-candidates (map #(update %1 chosen) candidates)
+         path []]
+    (if (= i (count grid))
+      path
+      (if (empty? (nth next-candidates (+ i 1)))
+        (recur i
+               candidates
+               (rand-nth (nth candidates i))
+               (map #(update %1 (rand-nth (nth candidates i))) candidates)
+               path)
+        (recur (inc i)
+               (map #(update %1 chosen) candidates)
+               (rand-nth (map #(update %1 chosen) candidates))
+               (conj chosen))))))
 
-(find-path [[0 0 0] [1 0 1] [1 0 1]])
-(find-path test)
-test
+(path-finder test)
 
+(defn combinatorics
+  [f
+   coll]
+  (let [i (str (count coll) (first coll))]
+    (if (empty? coll)
+      f
+      (map (fn [i] (foo (conj f i) (rest coll))) (first coll)))))
 
 (defn accents [key-coll]
   (if (not= key-coll '())
@@ -151,4 +174,5 @@ first-filter
 
 (write-file)
 second-filter
+
 
