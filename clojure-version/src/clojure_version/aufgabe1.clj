@@ -10,15 +10,15 @@
                                pool (-> (first file)
                                         (clojure.string/split #" ")) ;; 20 elements...
                                readed []
-                               accent []]
+                               accent {}]
                           (if (= i (count (-> (first file)
                                               (clojure.string/split #" "))))
-                            [readed accent]
+                            [readed accent pool]
                             (if (re-find #"[,;:.]" (first pool))
                               (recur (inc i)
                                      (rest pool)
                                      (conj readed (clojure.string/replace (first pool) #"[,;:.]" ""))
-                                     (conj accent (first pool)))
+                                     (assoc accent (clojure.string/replace (first pool) #"[,;:.]" "") (first pool)))
                               (recur (inc i)
                                      (rest pool)
                                      (conj readed (first pool))
@@ -26,7 +26,9 @@
     {:incompletes readed
      :completes (-> (second file)
                     (clojure.string/split #" "))
-     :accents accent}))
+     :accents accent
+     :raw (-> (first file)
+              (clojure.string/split #" "))}))
 
 (def search-map-by-val
   (comp
@@ -66,12 +68,12 @@
 
 (defn seek-places
   [grid]
-  (letfn [(paolo [x]
+  (letfn [(paolo []
             (comp
-             (map-indexed (fn [i e] [i (nth e x)]))
+             (map-indexed (fn [i e] [i e]))
              (filter #(pos? (second %1)))
              (map first)))]
-    (map (transduce (paolo %1) conj [] grid) (range (count grid)))))
+    (map #(transduce (paolo ) conj [] %1) grid)))
 
 (defn combinatorics
   [coll]
@@ -103,19 +105,14 @@
                                     completes))
                              incompletes)
                   paths (->> karte
-                            seek-places
-                            combinatorics
-                            (filter #(= (count (set %1)) (count %1))))]
+                             seek-places
+                             combinatorics
+                             (filter #(= (count (set %1)) (count %1))))]
               (map (fn [i c]
                      [i (nth completes c)])
                    incompletes (rand-nth paths))))]
-    (comment (let [worked (normalize (flatten (map find-path (:not-ready first-filter))))]
-               (conj (:ready first-filter) worked)))
-    (last (map (fn [x] x) (:not-ready first-filter)))))
-
-second-filter
-
-(map (fn [x] x) (:not-ready first-filter))
+    (let [worked (normalize (flatten (map find-path (:not-ready first-filter))))]
+      (conj (:ready first-filter) worked))))
 
 ;; .......... EXPERIMENTATION Generalization using GENETIC ALGORITMS .............
 
@@ -152,28 +149,25 @@ second-filter
 
 ;; ...............................................................................
 
-second-filter
-
-(defn accents [key-coll]
-  (if (not= key-coll '())
-    (update
-     (zeta (rest key-coll))
-     (clojure.string/replace (first key-coll) #"[,;:.]" "")
-     #(str %1 (re-find #"[,;:.]" (first key-coll))))
-    second-filter))
-
-(defn order [coll]
-  (if (not= coll '())
-    (cons (second-filter (first coll)) (order (rest coll)))
+(defn order
+  [scheme
+   hash-map]
+  (if (not= scheme '())
+    (cons (hash-map (first scheme)) (order (rest scheme) hash-map))
     nil))
 
-(order (:incompletes start))
-second-filter
-(first-filter)
+(defn answer []
+  (let [smap (conj (normalize (mapcat #(let [x (re-find #"[,;:.]" (second %1))
+                                             v (second-filter (first %1))]
+                                         [v (str v x)])
+                                      (:accents start)))
+                   (:accents start))
+        coll1 (normalize (replace smap (mapcat flatten second-filter)))
+        ordered (order (:raw start) coll1)]
+    (with-open [wrtr (clojure.java.io/writer (io/resource "clojure_version/aufgabe1sample.txt") :append true)]
+      (.write wrtr (clojure.string/join " "  ordered)))))
 
-(defn write-file []
-  (with-open [wrtr (clojure.java.io/writer (io/resource "clojure_version/aufgabe1sample.txt") :append true)]
-    (.write wrtr "hello")))
+(answer)
 
 
 
