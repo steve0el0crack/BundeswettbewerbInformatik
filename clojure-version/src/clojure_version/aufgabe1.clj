@@ -33,6 +33,10 @@
    (filter #(= (second %1) 1))
    (map first)))
 
+(defn normalize
+  [coll]
+  (apply assoc {} coll))
+
 (def first-filter
   (letfn [(label []
             (map (fn [f]
@@ -57,11 +61,30 @@
                                           (mapcat #(wrap %1) a)))
                                  [(clojure.set/difference (unique-set) (solved))
                                   (solved)])]
-      {:ready ready ;; ... of the form {("a_s")(aus)} there is only one combination.
+      {:ready (normalize (mapcat flatten ready)) 
        :not-ready not-ready})))
 
+(defn seek-places
+  [grid]
+  (letfn [(paolo [x]
+            (comp
+             (map-indexed (fn [i e] [i (nth e x)]))
+             (filter #(pos? (second %1)))
+             (map first)))]
+    (map (transduce (paolo %1) conj [] grid) (range (count grid)))))
+
+(defn combinatorics
+  [coll]
+  (letfn [(foo [f
+                coll]
+            (let [i (str (count coll) (first coll))]
+              (if (empty? coll)
+                [f]
+                (mapcat (fn [i] (foo (conj f i) (rest coll))) (first coll)))))]
+    (foo [] coll)))
+
 (def second-filter
-  (letfn [(fitness [a b]
+  (letfn [(connection? [a b]
             (let [v (reduce + (map #(if (and (not= %1 %2)
                                              (not= %2 (first "_"))
                                              (not= %1 (first "_")))
@@ -71,49 +94,35 @@
               (if (neg? v) 0 1)))
           (reduce-map [coll]
             (reduce-kv (fn [a b c] (if (> c (second a)) [b c] a)) [:start 0] coll))
-          (normalize [coll]
-            (apply assoc {} coll))
-          (path-finder [group]
+          (find-path [group]
             (let [incompletes (first group)
                   completes (second group)
                   karte (map (fn [x]
                                (map (fn [y]
-                                      (fitness x y))
+                                      (connection? x y))
                                     completes))
-                             incompletes)]
-              karte))]
-    (comment (let [[first-part second-part] (map normalize
-                                          [(mapcat flatten (:ready first-filter))
-                                           (->> (mapcat categorize (:not-ready first-filter))
-                                                (flatten))])]
-               (conj first-part second-part)))
-    ))
+                             incompletes)
+                  paths (->> karte
+                            seek-places
+                            combinatorics
+                            (filter #(= (count (set %1)) (count %1))))]
+              (map (fn [i c]
+                     [i (nth completes c)])
+                   incompletes (rand-nth paths))))]
+    (comment (let [worked (normalize (flatten (map find-path (:not-ready first-filter))))]
+               (conj (:ready first-filter) worked)))
+    (last (map (fn [x] x) (:not-ready first-filter)))))
 
-(defn grid [a] (map (fn [_] (repeat 3 (rand-int 2))) (range a)))
+second-filter
 
-(defn seek-places
-  [grid]
-  (letfn [(paolo [x]
-            (comp
-             (map-indexed (fn [i e] [i (nth e x)]))
-             (filter #(pos? (second %1)))
-             (map first)))]
-    (comment (map #(transduce (paolo %1) conj [] grid) (range (count grid))))
-    (transduce (paolo 0) conj [] grid)))
+(map (fn [x] x) (:not-ready first-filter))
 
-(seek-places grid)
+;; .......... EXPERIMENTATION Generalization using GENETIC ALGORITMS .............
 
-(defn paolo [x]
-  (comp
-   (map-indexed (fn [i e] [i (nth e x)]))
-   (filter #(pos? (second %1)))
-   (map first)))
-
-(transduce  (paolo 0) conj [] [[0 1 0] [0 1 0] [1 0 1]])
-(transduce  (paolo 1) conj [] [[0 1 0] [0 1 0] [1 0 1]])
-(transduce  (paolo 2) conj [] [[0 1 0] [0 1 0] [1 0 1]])
-
-(map first (filter #(pos? (second %1)) (map-indexed (fn [i e] [i (nth e 0)]) [[0 1 0] [0 0 0] [1 0 1]])))
+(defn grid
+  [a]
+  (let [r (range a)]
+    (for [x r] (for [y r] (rand-int 2)))))
 
 (defn update
   [coll x]
@@ -141,13 +150,9 @@
 
 (path-finder test)
 
-(defn combinatorics
-  [f
-   coll]
-  (let [i (str (count coll) (first coll))]
-    (if (empty? coll)
-      f
-      (map (fn [i] (foo (conj f i) (rest coll))) (first coll)))))
+;; ...............................................................................
+
+second-filter
 
 (defn accents [key-coll]
   (if (not= key-coll '())
@@ -159,20 +164,16 @@
 
 (defn order [coll]
   (if (not= coll '())
-    (cons (second-filter (first coll)) (foo (rest coll)))
+    (cons (second-filter (first coll)) (order (rest coll)))
     nil))
 
 (order (:incompletes start))
-(count second-filter)
-start
-first-filter
-
+second-filter
+(first-filter)
 
 (defn write-file []
   (with-open [wrtr (clojure.java.io/writer (io/resource "clojure_version/aufgabe1sample.txt") :append true)]
     (.write wrtr "hello")))
 
-(write-file)
-second-filter
 
 
