@@ -1,6 +1,7 @@
 (ns clojure-version.aufgabe2  
   (:require [clojure.java.io :as io]
-            [clojure.core.logic :as logic]))
+            [clojure.core.logic :as logic]
+            [clojure-version.aufgabe1 :as aufgabe1]))
 
 ;; AUFGABE 2: Dreieckspuzzle
 
@@ -18,6 +19,18 @@
 ;; Um das Prozess besser zu erklaeren wird ein vereinfachtes Version des Problem "geloest": 4 kleine Dreiecke (aufgabe2sample2.txt).
 
 Teilen
+
+(defn Superset
+  [coll]
+  (map #(remove (fn [_] (= _ nil)) %1) (aufgabe1/combinatorics (map (fn [e] [e nil]) coll))))
+
+(defn connects?
+  [d1 d2]
+  (logic/run* [q]
+    (logic/membero q (Superset d1))
+    (logic/membero q (Superset d2))))
+
+(reduce #(if (> (count %1) (count %2)) %1 %2) (connects? [1 2 3] [1 1 3]))
 
 ;; This is the criteria for stablishing/creating "edges" in our graph.
 ;; {n #{a b c}} means there are n paths between X and Y, each one formed by the union of a, or b, or c.
