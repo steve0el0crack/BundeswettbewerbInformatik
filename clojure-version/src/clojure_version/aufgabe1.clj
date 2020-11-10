@@ -76,6 +76,7 @@
     (map #(transduce (paolo ) conj [] %1) grid)))
 
 (defn combinatorics
+  ;; [[1 2 3] [a b c] [x y z] ...] -> Every combination of picking N elements, each one out of the Nth list. This generates a "path"
   [coll]
   (letfn [(foo [f
                 coll]
