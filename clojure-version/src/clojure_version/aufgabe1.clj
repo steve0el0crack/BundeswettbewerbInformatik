@@ -1,4 +1,4 @@
-(ns clojure-version.core 
+(ns clojure-version.aufgabe1 
   (:require [clojure.java.io :as io]))
 
 ;; AUFGABE 1: Woerter aufraeumen 
@@ -80,7 +80,7 @@
   [coll]
   (letfn [(foo [f
                 coll]
-            (let [i (str (count coll) (first coll))]
+            (let [i (gensym)]
               (if (empty? coll)
                 [f]
                 (mapcat (fn [i] (foo (conj f i) (rest coll))) (first coll)))))]
