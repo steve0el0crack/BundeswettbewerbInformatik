@@ -9,58 +9,72 @@
 ;; AFGABE 5: Wichteln
 
 (def input
-  (with-open [rdr (clojure.java.io/reader (io/resource "clojure_version/aufgabe5sample3.txt"))]
-    (reduce conj [] (line-seq rdr))))
+  (let [hey (comp
+             (map #(clojure.string/split %1 #" "))
+             (map (fn [_] (remove #(= %1 "") _)))
+             (map #(map read-string %1)))
+        input (with-open [rdr (clojure.java.io/reader (io/resource "clojure_version/aufgabe5sample2.txt"))]
+                (reduce conj [] (line-seq rdr)))]
+    (transduce hey conj [] input)))
 
-(def hey
-  (comp
-   (map #(clojure.string/split %1 #" "))
-   (map (fn [_] (remove #(= %1 "") _)))
-   (map #(map read-string %1))))
+(def data (rest input))
 
-(def data (transduce hey conj [] (rest input)))
+;; {:per-column [[...] [...] [...]] :f #{...} :s #{...} :l #{...}}
 
-(def best-choice  ;; gives only the numbers which must be selected on each file (:f first :s second :l last).
- (let [per-file (map #(map %1 data) [first second last])
-        uniques (map set per-file)
+(def description
+  (let [per-column (map #(map %1 data) [first second last])
+        uniques (map set per-column)
         first-wish (first uniques)
         second-wish (set/difference (second uniques) (first uniques))
         third-wish   (set/difference (last uniques) (set/union (second uniques) (first uniques)))]
-   {:per-file per-file :f first-wish :s second-wish  :l third-wish}))
+    {:per-column per-column :f first-wish :s second-wish  :l third-wish}))
 
-(defn pos-finding
-  [coll0 row foo] ;; [data :f first] ... would be for the first search of places, where every row is valid.
-  (loop [pool coll0
-         labels (row best-choice)
-         h []]
-    (if (empty? labels)
-      h
-      (let [i (->> (foo (:per-file best-choice))  ;; I can take this out in a LET structure.
-                   (map-indexed (fn [i v] [i v]))
-                   (filter #(= (first labels) (second %1)))
-                   (map first)
-                   (rand-nth))]
-        (recur (apply conj (subvec data 0 i) (subvec data i (- (count data) 1)))
-               (rest labels)
-               (conj h i))))))
+(def structure
+ (map (fn [f k]
+         (apply conj (map (fn [v]
+                            (let [enumerate (map-indexed (fn [i v] [i v]) (f (:per-column description)))]
+                              {v (map first (filter #(= (second %1) v) enumerate))}))
+                          (k description))))
+       [first second last] [:f :s :l]))
 
-(defn after-chose
-  [coll0 key foo]  ;;on a list of possible (free) rows, it takes out every one which was already used...
-  (->> coll0
-       (map-indexed (fn [i v] [i v]))
-       (remove (fn [coll] (some #(= %1 (first coll)) (pos-finding key foo))))
-       (map second)))
+;; v's are the unique numbers (they are all different) and the coll's are the positions at which they appear at :x column.
+;; [{v1 [...], v2 [...], v3 [...]} -> :f irst column
+;;  {va [...], vb [...]}           -> :s econd column
+;;  {vx [...] ... }]               -> :l ast column
 
-(def first-row-positions {(pos-finding data :f first) (:f best-choice)})
-{  [4 27 12 24 10 9 5 7 0 16 25 18 15 19 21]
- #{20 27 4 29 6 28 3 12 2 9 26 16 30 10 8}}
+;; Is there any variable with just one possibility? It means if there is a number on any column that appears just once.
+(def fixed-vars (map (fn [h] (filter #(= 1 (count (second %1))) h)) structure))
 
-(def second-row-positions {(pos-finding (after-chose data :f first) :s second) (:s best-choice)})
-{ [17 23 27 13 20 12 9]
- #{7 15 21 23 19 14 18}}
+(let [pool (map second (first structure))  ;; I am looking into the first column
+      cond1 (map second (second structure))  ;; then into the second one
+      cond2 (map second (last structure))]  ;; and finally into the last.
+  (logic/run 1 [q]
+    (logic/fresh [a b c x] ;; a, b and c are not going to be the same number since it is impossible for two numbers to occupy the same index on an array...
+      (logic/membero a (nth pool 0))
+      (logic/membero b (nth pool 1))
+      (logic/membero c (nth pool 2))
 
-(def third-row-positions {(pos-finding (after-chose (after-chose data :f first) :s second) :l last) (:l best-choice)})
-{[19 27] #{13 17}}
+      (logic/permuteo x [a b c])
+      (not-membero x cond1)
+      (not-membero x cond2)
+
+      (logic/== q [a b c]))))
+
+(logic/defne rec-membero
+  [vars nested-coll]
+  ([_ []])
+  ([[x . xr] [S . rS]]
+   (logic/membero x S)
+   (rec-membero xr rS)))
+
+(logic/run 2 [a]
+  (rec-membero [a] [[1 2]]))
+
+(logic/defne not-membero [x l]
+  ([_ []])
+  ([_ [?y . ?r]]
+    (logic/!= x ?y)
+    (not-membero x ?r)))
 
 
 
