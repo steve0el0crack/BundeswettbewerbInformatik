@@ -15,12 +15,60 @@
 (def Teilen
   (let [parts (rest (rest input))] 
     (map (fn [triple]
-           (map #(+ (read-string %1) (read-string (first input)))  
+           (map #(read-string %1)  
                 (clojure.string/split triple #" ")))
          parts)))
 
-(last
- (logic/run 1 [q]
+(def mytest [[7 1 8] [2 4 0] [6 5 3] [-1 -3 -2]])
+
+(defn test-todo []
+  (logic/run 1 [q]
+    (logic/fresh [A B C D] ;; the kleine triangles
+      (logic/permuteo [A B C D] mytest)
+      (logic/fresh [x1 x2 x3
+                    x4 x5 x6
+                    x7 x8 x9]
+
+        (logic/permuteo [x1 x2 x3] A)
+        (logic/permuteo [x4 x5 x6] B)
+        (logic/permuteo [x7 x8 x9] C)
+
+        (logic/fresh [c1 c2 c3]
+          (logic/permuteo [c1 c2 c3] D)
+
+          (fd/eq
+           (< (+ c1 0) 0)
+           (< c2 0)
+           (< c3 0))
+          
+          (logic/== q {:A A
+                       :B B
+                       :C C
+                       :details {D {A x2
+                                    B x6
+                                    C x7}}
+                       :alphabet {"x1" x1
+                                  "x2" x2
+                                  "x3" x3
+                                  "x4" x4
+                                  "x5" x5
+                                  "x6" x6
+                                  "x7" x7
+                                  "x8" x8
+                                  "x9" x9
+                                  "c1" x2
+                                  "c2" x6
+                                  "c3" x7}}))))))
+
+(test-todo)
+
+(fd/eq
+           (= (+ c1 x2) 0)
+           (= (+ c2 x6) 0)
+           (= (+ c3 x7) 0))
+
+(defn todo  []
+  (logic/run 1 [q]
     (logic/fresh [n1 n2 n3
                   n4 n5 n6
                   n7 n8 n9
@@ -37,15 +85,37 @@
       (logic/== c2 [n4 n5 n6])
       (logic/== c3 [n7 n8 n9])
 
-      (macro/symbol-macrolet [_ (logic/lvar)]
-                             (logic/== a1 [n3 _ _])
-                             (logic/== a2 [n6 _ _])
-                             (logic/== a3 [n9 _ _]))
+      (logic/fresh [i1 i2 i3
+                    i4 i5 i6
+                    i7 i8 i9
 
-      (macro/symbol-macrolet [_ (logic/lvar)]
-                             (logic/== b1 [n1 n4 _])
-                             (logic/== b2 [n5 n8 _])
-                             (logic/== b3 [n2 n7 _]))
+                    x1 x2 x3
+                    x4 x5 x6
+                    x7 x8 x9]
+
+        (logic/permuteo b1 [i1 i4 x1])
+        (logic/permuteo b2 [i5 i8 x2])
+        (logic/permuteo b3 [i2 i7 x3])
+
+        (logic/permuteo a1 [i3 x4 x5])
+        (logic/permuteo a2 [i6 x6 x7])
+        (logic/permuteo a3 [i9 x8 x9])
+        
+        (fd/eq
+         (= (+ i1 n1) 0)
+         (= (+ i4 n4) 0)
+
+         (= (+ i5 n5) 0)
+         (= (+ i8 n8) 0)
+
+         (= (+ i2 n2) 0)
+         (= (+ i7 n7) 0)
+         
+         (= (+ i3 n3) 0)
+
+         (= (+ i6 n6) 0)
+         
+         (= (+ i9 n9) 0)))
       
       (logic/== q {:c [c1 c2 c3]
                    :b [b1 b2 b3]
@@ -66,129 +136,10 @@
                               "n8" n8
                               "n9" n9}}))))
 
+(todo)
+
+
+
+
 ;; *************************** ANLYZING ****************************
-
-;; So there is the same error a lot of times...
-
-;; with "permuteo" constrainting just B's
-{:c [(5 0 6) (2 1 5) (5 5 2)],
- :b [(2 1 4) (2 6 4) (0 5 2)],
- :a [(5 2 2) (2 6 1) (1 4 0)],
- :details {(2 1 4) {(5 0 6) 5,
-                    (2 1 5) 2},
-           (2 6 4) {(2 1 5) 1,  ;; "False connection"... [2 6 4] cannot connect to [2 1 5] on port 1
-                    (5 5 2) 5},
-           (0 5 2) {(5 0 6) 6,
-                    (5 5 2) 5}},
- :rest {"n2" 0,
-        "n6" 5,
-        "n9" 2}}
-
-;; Replacing "permuteo" with "unifying" (==)
-{:c [(5 0 6) (2 1 5) (5 5 2)],
- :b [(5 2 2) (2 6 4) (0 5 2)],
- :a [(2 1 4) (2 6 1) (1 4 0)],
- :details {(5 2 2) {(5 0 6) 5,
-                    (2 1 5) 2},
-           (2 6 4) {(2 1 5) 1,  ;; "False connection"... [2 6 4] cannot connect to [2 1 5] on port 1
-                    (5 5 2) 5},
-           (0 5 2) {(5 0 6) 6,
-                    (5 5 2) 5}},
- :rest {"n2" 0,
-        "n6" 5,
-        "n9" 2}}
-
-{:c [(5 0 6) (5 2 2) (5 5 2)],
- :b [(2 1 4) (2 6 4) (0 5 2)],
- :a [(2 1 5) (2 6 1) (1 4 0)],
- :details {(2 1 4) {(5 0 6) 5,   ;; "False connection"... [2 1 4] cannot connect to [5 0 6] on port 5
-                    (5 2 2) 5},
-           (2 6 4) {(5 2 2) 2,
-                    (5 5 2) 5},  ;; "False connection"... [2 6 4] cannot connect to [5 5 2] on port 5
-           (0 5 2) {(5 0 6) 6,   ;; "False connection"... [0 5 2] cannot connect to [5 0 6] on port 6
-                    (5 5 2) 5}}, 
- :rest {"n2" 0,
-        "n6" 2,
-        "n9" 2}}
-
-;; Replacing == with /permuteo for constraints both on A's and B's
-{:c [(5 5 2) (2 1 5) (2 6 1)],
- :b [(2 1 4) (2 6 4) (0 5 2)],
- :a [(5 2 2) (5 0 6) (1 4 0)],
- :details {(2 1 4) {(5 5 2) 5,  ;; "False connection"... [2 1 4] cannot connect to [5 0 6] on port 5
-                    (2 1 5) 2}, 
-           (2 6 4) {(2 1 5) 1,  ;; "False connection"... [2 1 4] cannot connect to [5 0 6] on port 5
-                    (2 6 1) 6},
-           (0 5 2) {(5 5 2) 2,   ;; ...
-                    (2 6 1) 2}}, ;; "False connection"... [0 5 2] cannot connect to [5 5 2] and [2 6 1] on port 2 at the same time!
- :rest {"n2" 5,
-        "n5" 1,
-        "n8" 6,
-        "n6" 5,
-        "n1" 5,
-        "n4" 2,
-        "n9" 1,
-        "n3" 2,
-        "n7" 2}}
-
-;; == and constraints both for A's and B's
-{:c [(5 5 2) (2 6 4) (2 6 1)],
- :b [(0 5 2) (5 0 6) (5 2 2)],
- :a [(2 1 5) (2 1 4) (1 4 0)],
- :details {(0 5 2) {(5 5 2) 5,  
-                    (2 6 4) 2},
-           (5 0 6) {(2 6 4) 6,   ;; "False connection"... [5 0 6] cannot connect to [2 6 4] and [2 6 1] on port 6 at the same time! 
-                    (2 6 1) 6},  ;; ...
-           (5 2 2) {(5 5 2) 2,
-                    (2 6 1) 2}},
- :alphabet {"n1" 5,
-            "n2" 5,
-            "n3" 2,
-            "n4" 2,
-            "n5" 6,
-            "n6" 4,
-            "n7" 2,
-            "n8" 6,
-            "n9" 1}}
-
-;; Constraints under one macro scope...
-{:c [(5 0 6) (2 1 5) (5 5 2)],
- :b [(2 1 4) (2 6 4) (0 5 2)],
- :a [(5 2 2) (2 6 1) (1 4 0)],
- :details {(2 1 4) {(5 0 6) 5,
-                    (2 1 5) 2},
-           (2 6 4) {(2 1 5) 1,
-                    (5 5 2) 5},
-           (0 5 2) {(5 0 6) 6,
-                    (5 5 2) 5}},
- :alphabet {"n1" 5,
-            "n2" 0,
-            "n3" 6,
-            "n4" 2,
-            "n5" 1,
-            "n6" 5,
-            "n7" 5,
-            "n8" 5,
-            "n9" 2}}
-
-;; Bis now the best result was with "== and constraints for both A's and B's"... I am going to search deeper that section...
-{:c [(5 5 2) (2 6 4) (2 6 1)],
- :b [(0 5 2) (5 0 6) (5 2 2)],
- :a [(2 1 5) (2 1 4) (1 4 0)],
- :details {(0 5 2) {(5 5 2) 5,
-                    (2 6 4) 2},
-           (5 0 6) {(2 6 4) 6,
-                    (2 6 1) 6},
-           (5 2 2) {(5 5 2) 2,
-                    (2 6 1) 2}},
- :alphabet {"n1" 5,
-            "n2" 5,
-            "n3" 2,
-            "n4" 2,
-            "n5" 6,
-            "n6" 4,
-            "n7" 2,
-            "n8" 6,
-            "n9" 1}}
-
 
