@@ -34,12 +34,12 @@
         (logic/permuteo [x7 x8 x9] C)
 
         (logic/fresh [c1 c2 c3]
-          (logic/permuteo [c1 c2 c3] D)
+          (logic/membero c1 D)
+          (logic/membero c2 D)
+          (logic/membero c3 D)
 
-          (fd/eq
-           (> c1 0)
-           (< c2 0)
-           (< c3 0))
+          (logic/== c1 (fd/eq (- x1)))
+          
           
           (logic/== q {:A A
                        :B B
@@ -138,7 +138,14 @@
 
 (todo)
 
-
+(logic/run 1 [q]
+  (logic/fresh [x y]
+    (logic/membero x [1 2 3])
+    (logic/membero y [-2 2 -3])
+    (fd/eq
+     (= (+ x y) 0)
+     (= (+ x y) 0))
+    (logic/== q [x y])))
 
 
 ;; *************************** ANLYZING ****************************
