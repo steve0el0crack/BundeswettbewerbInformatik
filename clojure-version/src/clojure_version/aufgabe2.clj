@@ -37,7 +37,7 @@
           (logic/permuteo [c1 c2 c3] D)
 
           (fd/eq
-           (< (+ c1 0) 0)
+           (> c1 0)
            (< c2 0)
            (< c3 0))
           
