@@ -47,12 +47,12 @@ Teilen
           (fd/in x2 x6 x7
                  c1 c2 c3
                  (fd/interval 0 14))
-          
-          (fd/eq
-           (= (- c1 7) (- (- x2 7)))
-           (= (- c2 7) (- (- x6 7)))
-           (= (- c3 7) (- (- x7 7))))
 
+
+          ;;; SOOO............ AT THE END IT DOES NOT WORK!
+          (fd/eq
+           (= (+ (- c1 7) (- x2 7)) 0))
+          
           (logic/== q {:A A
                        :B B
                        :C C
@@ -72,6 +72,11 @@ Teilen
                                   "c2" c2
                                   "c3" c3}}))))))
 
+(fd/eq
+           (= (+ (- c1 7) (- x2 7)) 0)
+           (= (+ (- c2 7) (- x6 7)) 0)
+           (= (+ (- c3 7) (- x7 7)) 0))
+
 ;; Suppose we have the same problem but just with two-side figures and the interval is [-3 | 3]
 ;; We can overrite this interval with [0 | 6] (+ 3) in order to work with "fd/in" and "fd/interval"
 ;; It seems like there is only one way to work some arithmetic... declaring a strict constraint interval for the variables!
@@ -88,18 +93,24 @@ Teilen
                   sa sb sc
                   ta tb tc]
 
-      (logic/== A [fa sa ta])
-      (logic/== B [fb sb tb])
-      (logic/== C [fc sc tc])
+      (logic/permuteo A [fa sa ta])
+      (logic/permuteo B [fb sb tb])
+      (logic/permuteo C [fc sc tc])
 
-      (fd/in fa fb fc sa sb sc ta tb tc (fd/interval 0 6))
+      (fd/in fa fb fc sb sc tb tc (fd/interval 0 6))
       
       (fd/eq
-       (= (+ fa fb) 6)
-       (= (+ sb sc) 6)
-       (= (+ tc ta) 6))
+       (< (- fa 3) 0))
 
-      (logic/== q [A B C]))))
+      (logic/== q [A B C {:fa fa}]))))
+
+(fd/eq
+       (= (+ (- fa 3) (- fb 3)) 0)
+       (= (+ (- sb 3) (- sc 3)) 0)
+       (= (+ (- tc 3) (- ta 3)) 0))
+
+
+;;  [[0 2 4] [6 4 5] [4 2 2]] -> [[-3 -1 1] [3 1 2] [1 -1 -1]]
 
 
 (def pa [4 5])
