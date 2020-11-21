@@ -15,9 +15,15 @@
 (def Teilen
   (let [parts (rest (rest input))] 
     (map (fn [triple]
-           (map #(read-string %1)  
+           (map #(+ (read-string %1) (read-string (first input)))  
                 (clojure.string/split triple #" ")))
          parts)))
+
+Teilen
+
+;; In this example there is only ONE POSSIBLE SOLUTION.
+;; the interval is [-7 | 7] -> [0 | 14] Therefore the goal is 14
+;; The exercise is to find the middle triangle [-1 -3 -2]
 
 (def mytest [[7 1 8] [2 4 0] [6 5 3] [-1 -3 -2]])
 
@@ -25,7 +31,7 @@
   (logic/run 1 [q]
     (logic/fresh [A B C D] 
 
-      (logic/permuteo [A B C D] mytest)
+      (logic/permuteo [A B C D] (map #(map (fn [v] (+ v 7)) %1) mytest))
 
       (logic/fresh [x1 x2 x3
                     x4 x5 x6
@@ -37,6 +43,15 @@
 
         (logic/fresh [c1 c2 c3]
           (logic/permuteo [c1 c2 c3] D)
+
+          (fd/in x2 x6 x7
+                 c1 c2 c3
+                 (fd/interval 0 14))
+          
+          (fd/eq
+           (= (- c1 7) (- (- x2 7)))
+           (= (- c2 7) (- (- x6 7)))
+           (= (- c3 7) (- (- x7 7))))
 
           (logic/== q {:A A
                        :B B
@@ -53,29 +68,39 @@
                                   "x7" x7
                                   "x8" x8
                                   "x9" x9
-                                  "c1" x2
-                                  "c2" x6
-                                  "c3" x7}}))))))
+                                  "c1" c1
+                                  "c2" c2
+                                  "c3" c3}}))))))
+
+;; Suppose we have the same problem but just with two-side figures and the interval is [-3 | 3]
+;; We can overrite this interval with [0 | 6] (+ 3) in order to work with "fd/in" and "fd/interval"
+;; It seems like there is only one way to work some arithmetic... declaring a strict constraint interval for the variables!
+
+;; -3 -2 -1 +1 +2 +3 -> 0 1 2 4 5 6   The condition before was that both add to 0
+;; (-1 | 1) -> (2 | 4)                Now it became that both numbers add to 6, since they all are positive.
+
 (logic/run 1 [q]
   (logic/fresh [A B C]
 
-    (logic/permuteo [A B C] [[1 3] [-1 -3] [0 0]])
+    (logic/permuteo [A B C] [[0 2 4] [6 4 5] [4 2 2]])
 
     (logic/fresh [fa fb fc
-                  sa sb sc]
+                  sa sb sc
+                  ta tb tc]
 
-      (logic/== A [fa sa])
-      (logic/== B [fb sb])
-      (logic/== C [fc sc])
+      (logic/== A [fa sa ta])
+      (logic/== B [fb sb tb])
+      (logic/== C [fc sc tc])
 
+      (fd/in fa fb fc sa sb sc ta tb tc (fd/interval 0 6))
+      
       (fd/eq
-       (= (+ fa fb) fc)
-       (= (+ sa sb) sc))
+       (= (+ fa fb) 6)
+       (= (+ sb sc) 6)
+       (= (+ tc ta) 6))
 
       (logic/== q [A B C]))))
 
-
-(todo)
 
 (def pa [4 5])
 
@@ -87,10 +112,6 @@
      (= (+ a b) 9))
     (logic/== q [a b])))
 
-(fd/eq
-           (= (+ c1 x2) 0)
-           (= (+ c2 x6) 0)
-           (= (+ c3 x7) 0))
 
 (defn todo  []
   (logic/run 1 [q]
@@ -125,6 +146,14 @@
         (logic/permuteo a1 [i3 x4 x5])
         (logic/permuteo a2 [i6 x6 x7])
         (logic/permuteo a3 [i9 x8 x9])
+
+        (fd/in i1 i2 i3
+               i4 i5 i6
+               i7 i8 i9
+               n1 n2 n3
+               n4 n5 n6
+               n7 n8 n9
+               (fd/interval 1(* 2 (read-string (first input)))))
         
         (fd/eq
          (= (+ i1 n1) 0)
