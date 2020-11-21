@@ -23,8 +23,10 @@
 
 (defn test-todo []
   (logic/run 1 [q]
-    (logic/fresh [A B C D] ;; the kleine triangles
+    (logic/fresh [A B C D] 
+
       (logic/permuteo [A B C D] mytest)
+
       (logic/fresh [x1 x2 x3
                     x4 x5 x6
                     x7 x8 x9]
@@ -34,13 +36,8 @@
         (logic/permuteo [x7 x8 x9] C)
 
         (logic/fresh [c1 c2 c3]
-          (logic/membero c1 D)
-          (logic/membero c2 D)
-          (logic/membero c3 D)
+          (logic/permuteo [c1 c2 c3] D)
 
-          (logic/== c1 (fd/eq (- x1)))
-          
-          
           (logic/== q {:A A
                        :B B
                        :C C
@@ -59,8 +56,36 @@
                                   "c1" x2
                                   "c2" x6
                                   "c3" x7}}))))))
+(logic/run 1 [q]
+  (logic/fresh [A B C]
 
-(test-todo)
+    (logic/permuteo [A B C] [[1 3] [-1 -3] [0 0]])
+
+    (logic/fresh [fa fb fc
+                  sa sb sc]
+
+      (logic/== A [fa sa])
+      (logic/== B [fb sb])
+      (logic/== C [fc sc])
+
+      (fd/eq
+       (= (+ fa fb) fc)
+       (= (+ sa sb) sc))
+
+      (logic/== q [A B C]))))
+
+
+(todo)
+
+(def pa [4 5])
+
+(logic/run 1 [q]
+  (logic/fresh [a b]
+    (logic/membero a pa)
+    (logic/membero b pa)
+    (fd/eq
+     (= (+ a b) 9))
+    (logic/== q [a b])))
 
 (fd/eq
            (= (+ c1 x2) 0)
@@ -147,6 +172,35 @@
      (= (+ x y) 0))
     (logic/== q [x y])))
 
+(logic.arithmetic/s one)
 
-;; *************************** ANLYZING ****************************
+;; *************************** Implementation of peano Axiomen from (https://github.com/frenchy64/Logic-Starter/blob/master/src/logic_introduction/numbers.clj) ****************************
 
+(defn s [x y] (logic/conso x [] y))
+
+(first (logic/run 1 [q] (s (logic/fresh [a] (s 0 a)) q)))
+
+(defn peano [n] (if (= n 0) 0 (cons (peano (- n 1)) nil)))
+
+(defn natural-number 
+  "A relation where x is a natural number"
+  [x]
+  (logic/conde
+    [(== zero x)]
+    [(logic/fresh [p]
+       (s p x)
+       (natural-number p))]))
+
+(defn plus
+  [x y z]
+  (logic/conde
+    [(logic/fresh [a]
+       (== [zero a a] [x y z])
+       (natural-number a))]
+    [(logic/fresh [xp zp]
+       (s xp x)
+       (s zp z)
+       (plus xp y zp))]))
+
+(first (logic/run 1 [q]
+    (logic/== q 4)))
