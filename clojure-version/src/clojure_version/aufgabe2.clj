@@ -16,7 +16,7 @@
 (def Teilen
   (let [parts (rest (rest input))] 
     (map (fn [triple]
-           (map #(+ (read-string %1) variance)  
+           (map #(read-string %1)  
                 (clojure.string/split triple #" ")))
          parts)))
 
@@ -24,7 +24,7 @@
 ;; the interval is [-7 | 7] -> [0 | 14] Therefore the goal is 14
 ;; The exercise is to find the middle triangle [-1 -3 -2]
 
-(def mytest [[7 1 5] [2 4 6] [6 5 3] [-1 -3 -2]])
+(def test0 [[7 1 5] [2 4 6] [6 5 3] [-1 -3 -2]])
 
 (defn test-todo []
   (logic/run 1 [q]
@@ -75,137 +75,117 @@
                                 :c3 5}}}})
 
 ;; TEST PASSED! Solving for 4 pieces (finding the center)
-
-;; In this test there is ONLY ONE POSSIBLE ANSWER.
-;; Therefore, the time solving this one is the maximum time... and indeed IT IS VERY LONG TIME (>> 5m.)
-(def naive-test
+;; Now passing to the second part of the implementation...
+ 
+(def test1
   [[10 10 2] [10 10 5] [10 10 7]     ;; A Ecken
    [-2 -3 -1] [-4 -5 -6] [-8 -9 -7]  ;; C Mitteln
    [10 1 8] [3 10 4] [9 6 10]])      ;; B Twice-connected
 
-(def key-test
+(def test2
   [[-1 -1 -1] [1 1 1] [-1 -1 -1]
    [-1 -1 -1] [1 1 1] [-1 -1 -1]
    [-1 -1 -1] [1 1 1] [-1 -1 -1]])
 
-
-(defn todo  []
-  (logic/run 1 [q]
-    (logic/fresh [n1 n2 n3
-                  n4 n5 n6
-                  n7 n8 n9
-                  
-                  C1 B1 A1
-                  C2 B2 A2
-                  C3 B3 A3]
-      
-      (logic/permuteo [C1 B1 A1
-                       C2 B2 A2
-                       C3 B3 A3]
-                      (map #(map (fn [v] (+ v 1)) %1) key-test)) 
-
-      (logic/permuteo C1 [n1 n2 n3])
-      (logic/permuteo C2 [n4 n5 n6])
-      (logic/permuteo C3 [n7 n8 n9])
-
-      (logic/fresh [i1 i2 i3
-                    i4 i5 i6
-                    i7 i8 i9]
+(def test3
+  [[2 2 2] [5 5 5] [7 7 7]     
+   [-2 -3 -1] [-4 -5 -6] [-8 -9 -7]  
+   [10 1 8] [3 10 4] [9 6 10]])
 
 
-        (macro/symbol-macrolet [_ (logic/lvar)]
-                               (logic/permuteo B1 [i1 i4 _])
-                               (logic/permuteo B2 [i5 i8 _])
-                               (logic/permuteo B3 [i2 i7 _])
+(defn start
+  [triangles shift]
+  (let [h (* 2 shift)]
+   (logic/run 1 [q]
+     (logic/fresh [n1 n2 n3
+                   n4 n5 n6
+                   n7 n8 n9
+                   
+                   C1 B1 A1
+                   C2 B2 A2
+                   C3 B3 A3]
+       
+       (logic/permuteo [C1 B1 A1
+                        C2 B2 A2
+                        C3 B3 A3]
+                       (map #(map (fn [v] (+ v shift)) %1) triangles)) 
 
-                               (logic/permuteo A1 [i3 _ _])
-                               (logic/permuteo A2 [i6 _ _])
-                               (logic/permuteo A3 [i9 _ _]))
+       (logic/permuteo C1 [n1 n2 n3])
+       (logic/permuteo C2 [n4 n5 n6])
+       (logic/permuteo C3 [n7 n8 n9])
 
-        (fd/in i1 i2 i3
-               i4 i5 i6
-               i7 i8 i9
+       (logic/fresh [i1 i2 i3
+                     i4 i5 i6
+                     i7 i8 i9]
 
-               n1 n2 n3
-               n4 n5 n6
-               n7 n8 n9
-               
-               (fd/interval 0 2))
 
-        ;; B1
-        (logic/membero i1 B1)
-        (logic/membero i4 B1)
-        ;; B2
-        (logic/membero i5 B2)
-        (logic/membero i8 B2)
-        ;; B3
-        (logic/membero i2 B3)
-        (logic/membero i7 B3)
-        ;; A1
-        (logic/membero i3 A1)
-        
-        (fd/eq
+         (macro/symbol-macrolet [_ (logic/lvar)]
+                                (logic/permuteo B1 [i1 i4 _])
+                                (logic/permuteo B2 [i5 i8 _])
+                                (logic/permuteo B3 [i2 i7 _])
+
+                                (logic/permuteo A1 [i3 _ _])
+                                (logic/permuteo A2 [i6 _ _])
+                                (logic/permuteo A3 [i9 _ _]))
+
+         (fd/in i1 i2 i3
+                i4 i5 i6
+                i7 i8 i9
+
+                n1 n2 n3
+                n4 n5 n6
+                n7 n8 n9
+                
+                (fd/interval 0 2))
+
          ;; B1
-         (= (+ n1 i1) 2) 
-         (= (+ n4 i4) 2) 
+         (logic/membero i1 B1)
+         (logic/membero i4 B1)
          ;; B2
-         (= (+ n5 i5) 2)
-         (= (+ n8 i8) 2)
+         (logic/membero i5 B2)
+         (logic/membero i8 B2)
          ;; B3
-         (= (+ n2 i2) 2)
-         (= (+ n7 i7) 2)
+         (logic/membero i3 B3)
+         (logic/membero i7 B3)
+
          ;; A1
-         (= (+ n3 i3) 2)
+         (logic/membero i3 A1)
          ;; A2
-         (= (+ 6 i6) 2)
+         (logic/membero i6 A2)
          ;; A3
-         (= (+ n9 i9) 2)
-         )        
-        
-        (logic/== q {:c [C1 C2 C3]
-                     :b [B1 B2 B3]
-                     :a [A1 A2 A3]
-                     
-                     ;; the following structure should be read as:
-                     :details {B1 {C1 {n1 i1}  ;; The connection between b1 and c1 is via {n1 i1}
-                                   C2 {n4 i4}} ;; " "
+         (logic/membero i9 A3)
+         
+         (fd/eq
+          ;; B1
+          (= (+ n1 i1) h) ;; - C1
+          (= (+ n4 i4) h) ;; - C2
+          ;; B2
+          (= (+ n5 i5) h) ;; - C2
+          (= (+ n8 i8) h) ;; - C3
+          ;; B3
+          (= (+ n3 i3) h) ;; - C1
+          (= (+ n7 i7) h) ;; - C3
+          
+          ;; A1
+          (= (+ n3 i3) h)
+          ;; A2
+          (= (+ n6 i6) h)
+          ;; A3
+          (= (+ n9 i9) h))        
+         
+         (logic/== q {:c [C1 C2 C3]
+                      :b [B1 B2 B3]
+                      :a [A1 A2 A3]
+                      :details {:B1-C1 {n1 i1}
+                                :B1-C2 {n4 i4}
+                                
+                                :B2-C2 {n5 i5}
+                                :B2-C3 {n8 i8}
+                                
+                                :B3-C1 {n3 i3}
+                                :B3-C3 {n7 i7}}}))))))
 
-                               B2 {C2 {n5 i5}  ;; Because n5 is in c2, and i5 in b2
-                                   C3 {n8 i8}} ;; " "
+(start test1 10)
+(start test2 1)   ;; 56s.
+(start test3 10)
 
-                               B3 {C1 {n3 i3}
-                                   C3 {n7 i7}}}})))))
-
-
-
-
-;; *************************** Implementation of peano Axiomen from (https://github.com/frenchy64/Logic-Starter/blob/master/src/logic_introduction/numbers.clj) ****************************
-
-(defn s [x y] (logic/conso x [] y))
-
-(first (logic/run 1 [q] (s (logic/fresh [a] (s 0 a)) q)))
-
-(defn peano [n] (if (= n 0) 0 (cons (peano (- n 1)) nil)))
-
-(defn natural-number 
-  "A relation where x is a natural number"
-  [x]
-  (logic/conde
-    [(== zero x)]
-    [(logic/fresh [p]
-       (s p x)
-       (natural-number p))]))
-
-(defn plus
-  [x y z]
-  (logic/conde
-    [(logic/fresh [a]
-       (== [zero a a] [x y z])
-       (natural-number a))]
-    [(logic/fresh [xp zp]
-       (s xp x)
-       (s zp z)
-       (plus xp y zp))]))
-
-(first (logic/run 1 [q]
-    (logic/== q 4)))
