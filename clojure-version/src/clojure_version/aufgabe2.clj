@@ -12,20 +12,19 @@
              (reduce conj [] (line-seq rdr))))
 
 ;; Each number was incremented because fd/interval only works with positive numbers. At the end they will be substracted...
+(def variance (read-string (first input)))
 (def Teilen
   (let [parts (rest (rest input))] 
     (map (fn [triple]
-           (map #(+ (read-string %1) (read-string (first input)))  
+           (map #(+ (read-string %1) variance)  
                 (clojure.string/split triple #" ")))
          parts)))
-
-Teilen
 
 ;; In this example there is only ONE POSSIBLE SOLUTION.
 ;; the interval is [-7 | 7] -> [0 | 14] Therefore the goal is 14
 ;; The exercise is to find the middle triangle [-1 -3 -2]
 
-(def mytest [[7 1 8] [2 4 0] [6 5 3] [-1 -3 -2]])
+(def mytest [[7 1 5] [2 4 6] [6 5 3] [-1 -3 -2]])
 
 (defn test-todo []
   (logic/run 1 [q]
@@ -48,81 +47,39 @@ Teilen
                  c1 c2 c3
                  (fd/interval 0 14))
 
-
-          ;;; SOOO............ AT THE END IT DOES NOT WORK!
           (fd/eq
-           (= (+ (- c1 7) (- x2 7)) 0))
+           (= (+ c1 x2) 14)
+           (= (+ c2 x6) 14)
+           (= (+ c3 x7) 14))
           
           (logic/== q {:A A
                        :B B
                        :C C
-                       :details {D {A x2
-                                    B x6
-                                    C x7}}
-                       :alphabet {"x1" x1
-                                  "x2" x2
-                                  "x3" x3
-                                  "x4" x4
-                                  "x5" x5
-                                  "x6" x6
-                                  "x7" x7
-                                  "x8" x8
-                                  "x9" x9
-                                  "c1" c1
-                                  "c2" c2
-                                  "c3" c3}}))))))
+                       :details {D {A {:c1 c1
+                                       :x2 x2}
+                                    B {:x6 x6
+                                       :c2 c2}
+                                    C {:x7 x7
+                                       :c3 c3}}}}))))))
 
-(fd/eq
-           (= (+ (- c1 7) (- x2 7)) 0)
-           (= (+ (- c2 7) (- x6 7)) 0)
-           (= (+ (- c3 7) (- x7 7)) 0))
+(comment
+  {:A (14 8 12),  ;; [7 1 5]
+   :B (13 12 10), ;; [6 5 3]
+   :C (9 11 13),   ;; [2 4 6]
+   ;; D [7 1 5]
+   :details {(6 4 5) {(14 8 12) {:c1 6,  ;; ... {-1 1}
+                                 :x2 8},
+                      (13 12 10) {:x6 10, ;; ... {3 -3}
+                                  :c2 4},
+                      (9 11 13) {:x7 9,   ;; ... {2 -2}
+                                :c3 5}}}})
 
-;; Suppose we have the same problem but just with two-side figures and the interval is [-3 | 3]
-;; We can overrite this interval with [0 | 6] (+ 3) in order to work with "fd/in" and "fd/interval"
-;; It seems like there is only one way to work some arithmetic... declaring a strict constraint interval for the variables!
+;; TEST PASSED! Solving for 4 pieces (finding the center)
 
-;; -3 -2 -1 +1 +2 +3 -> 0 1 2 4 5 6   The condition before was that both add to 0
-;; (-1 | 1) -> (2 | 4)                Now it became that both numbers add to 6, since they all are positive.
-
-(logic/run 1 [q]
-  (logic/fresh [A B C]
-
-    (logic/permuteo [A B C] [[0 2 4] [6 4 5] [4 2 2]])
-
-    (logic/fresh [fa fb fc
-                  sa sb sc
-                  ta tb tc]
-
-      (logic/permuteo A [fa sa ta])
-      (logic/permuteo B [fb sb tb])
-      (logic/permuteo C [fc sc tc])
-
-      (fd/in fa fb fc sb sc tb tc (fd/interval 0 6))
-      
-      (fd/eq
-       (< (- fa 3) 0))
-
-      (logic/== q [A B C {:fa fa}]))))
-
-(fd/eq
-       (= (+ (- fa 3) (- fb 3)) 0)
-       (= (+ (- sb 3) (- sc 3)) 0)
-       (= (+ (- tc 3) (- ta 3)) 0))
-
-
-;;  [[0 2 4] [6 4 5] [4 2 2]] -> [[-3 -1 1] [3 1 2] [1 -1 -1]]
-
-
-(def pa [4 5])
-
-(logic/run 1 [q]
-  (logic/fresh [a b]
-    (logic/membero a pa)
-    (logic/membero b pa)
-    (fd/eq
-     (= (+ a b) 9))
-    (logic/== q [a b])))
-
+(def naive-test
+  [[10 10 2] [10 10 5] [10 10 7]     ;; A Ecken
+   [-2 -3 -1] [-4 -5 -6] [-8 -9 -7]  ;; C Mitteln
+   [10 1 8] [3 10 4] [9 6 10]])      ;; B Twice-connected
 
 (defn todo  []
   (logic/run 1 [q]
@@ -130,89 +87,123 @@ Teilen
                   n4 n5 n6
                   n7 n8 n9
                   
-                  c1 b1 a1
-                  c2 b2 a2
-                  c3 b3 a3]
+                  C1 B1 A1
+                  C2 B2 A2
+                  C3 B3 A3]
       
-      (logic/permuteo [c1 b1 a1
-                       c2 b2 a2
-                       c3 b3 a3] Teilen) 
+      (logic/permuteo [C1 B1 A1
+                       C2 B2 A2
+                       C3 B3 A3]
+                      (map #(map (fn [v] (+ v 10)) %1) naive-test)) 
 
-      (logic/== c1 [n1 n2 n3])
-      (logic/== c2 [n4 n5 n6])
-      (logic/== c3 [n7 n8 n9])
+      (logic/== C1 [n1 n2 n3])
+      (logic/== C2 [n4 n5 n6])
+      (logic/== C3 [n7 n8 n9])
 
       (logic/fresh [i1 i2 i3
                     i4 i5 i6
-                    i7 i8 i9
+                    i7 i8 i9]
 
-                    x1 x2 x3
-                    x4 x5 x6
-                    x7 x8 x9]
+        ;; IT SEEMS like this macrlet block makes a new scope of itself and the goals defined here are not counted after... that means for example i1 is set to satisfy (*), but then takes whatever other value for (&)
+        (macro/symbol-macrolet [_ (logic/lvar)]
 
-        (logic/permuteo b1 [i1 i4 x1])
-        (logic/permuteo b2 [i5 i8 x2])
-        (logic/permuteo b3 [i2 i7 x3])
+                               (logic/permuteo B1 [i1 i4 _]) ;; *
+                               (logic/permuteo B2 [i5 i8 _])
+                               (logic/permuteo B3 [i2 i7 _])
 
-        (logic/permuteo a1 [i3 x4 x5])
-        (logic/permuteo a2 [i6 x6 x7])
-        (logic/permuteo a3 [i9 x8 x9])
+                               (logic/permuteo A1 [i3 _ _])
+                               (logic/permuteo A2 [i6 _ _])
+                               (logic/permuteo A3 [i9 _ _]))
 
         (fd/in i1 i2 i3
                i4 i5 i6
                i7 i8 i9
+
                n1 n2 n3
                n4 n5 n6
                n7 n8 n9
-               (fd/interval 1(* 2 (read-string (first input)))))
-        
+               
+               (fd/interval 0 20))
+
         (fd/eq
-         (= (+ i1 n1) 0)
-         (= (+ i4 n4) 0)
+         ;; B1
+         (= (+ n1 i1) 20) ;; &
+         (= (+ n4 i4) 20)
+         ;; B2
+         (= (+ n5 i5) 20)
+         (= (+ n8 i8) 20))
+        
+        (logic/== q {:c [C1 C2 C3]
+                     :b [B1 B2 B3]
+                     :a [A1 A2 A3]
+                     
+                     ;; the following structure should be read as:
+                     :details {B1 {C1 {n1 i1}  ;; The connection between b1 and c1 is via {n1 i1}
+                                   C2 {n4 i4}} ;; " "
 
-         (= (+ i5 n5) 0)
-         (= (+ i8 n8) 0)
+                               B2 {C2 {n5 i5}  ;; Because n5 is in c2, and i5 in b2
+                                   C3 {n8 i8}} ;; " "
 
-         (= (+ i2 n2) 0)
-         (= (+ i7 n7) 0)
-         
-         (= (+ i3 n3) 0)
-
-         (= (+ i6 n6) 0)
-         
-         (= (+ i9 n9) 0)))
-      
-      (logic/== q {:c [c1 c2 c3]
-                   :b [b1 b2 b3]
-                   :a [a1 a2 a3]
-                   :details {b1 {c1 n1
-                                 c2 n4}
-                             b2 {c2 n5
-                                 c3 n8}
-                             b3 {c1 n3
-                                 c3 n7}}
-                   :alphabet {"n1" n1
-                              "n2" n2
-                              "n3" n3
-                              "n4" n4
-                              "n5" n5
-                              "n6" n6
-                              "n7" n7
-                              "n8" n8
-                              "n9" n9}}))))
+                               B3 {C1 {n3 i3}
+                                   C3 {n7 i7}}}})))))
 
 (todo)
 
-(logic/run 1 [q]
-  (logic/fresh [x y]
-    (logic/membero x [1 2 3])
-    (logic/membero y [-2 2 -3])
-    (fd/eq
-     (= (+ x y) 0)
-     (= (+ x y) 0))
-    (logic/== q [x y])))
+(fd/in i1 i2 i3
+               i4 i5 i6
+               i7 i8 i9
+               
+               n1 n2 n3
+               n4 n5 n6
+               n7 n8 n9
 
-(logic.arithmetic/s one)
+               (fd/interval 0 (* 2 variance)))
+        
+        (fd/eq
+         (= (+ i1 n1) (* 2 variance))
+         (= (+ i4 n4) (* 2 variance))
+
+         (= (+ i5 n5) (* 2 variance))
+         (= (+ i8 n8) (* 2 variance))
+
+         (= (+ i2 n2) (* 2 variance))
+         (= (+ i7 n7) (* 2 variance))
+         
+         (= (+ i3 n3) (* 2 variance))
+
+         (= (+ i6 n6) (* 2 variance))
+         
+         (= (+ i9 n9) (* 2 variance)))
+
+({:c [(20 20 12) (8 7 9) (20 11 18)],
+  :b [(20 20 15) (6 5 4) (13 20 14)],
+  :a [(20 20 17) (2 1 3) (19 16 20)],
+  
+  :details {(20 20 15) {(20 20 12) {20 0},
+                        (8 7 9) {8 12}},
+
+            (6 5 4) {(8 7 9) {7 13},
+                     (20 11 18) {11 9}},
+
+            (13 20 14) {(20 20 12) {12 0},
+                        (20 11 18) {20 0}}}})
+
+
+;;ERROR 0
+({:c [(2 1 4) (2 6 4) (5 5 2)],
+  :b [(5 2 2) (5 0 6) (0 5 2)],
+  :a [(2 1 5) (2 6 1) (1 4 0)],
+  :details {(5 2 2) {(2 1 4) {2 4},
+                     (2 6 4) {2 4}},
+            
+            (5 0 6) {(2 6 4) {6 0},
+                     (5 5 2) {5 1}}, ;; these two two numbers add indeed up to 6, but they are NOT ON [5 0 6]! (n8 i8) | (5 1) ... b2 <> c2
+
+            (0 5 2) {(2 1 4) {4 0},
+                     (5 5 2) {5 0}}}})
+
+
+
 
 ;; *************************** Implementation of peano Axiomen from (https://github.com/frenchy64/Logic-Starter/blob/master/src/logic_introduction/numbers.clj) ****************************
 
