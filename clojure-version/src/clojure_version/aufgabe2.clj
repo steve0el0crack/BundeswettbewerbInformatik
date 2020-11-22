@@ -76,10 +76,18 @@
 
 ;; TEST PASSED! Solving for 4 pieces (finding the center)
 
+;; In this test there is ONLY ONE POSSIBLE ANSWER.
+;; Therefore, the time solving this one is the maximum time... and indeed IT IS VERY LONG TIME (>> 5m.)
 (def naive-test
   [[10 10 2] [10 10 5] [10 10 7]     ;; A Ecken
    [-2 -3 -1] [-4 -5 -6] [-8 -9 -7]  ;; C Mitteln
    [10 1 8] [3 10 4] [9 6 10]])      ;; B Twice-connected
+
+(def key-test
+  [[-1 -1 -1] [1 1 1] [-1 -1 -1]
+   [-1 -1 -1] [1 1 1] [-1 -1 -1]
+   [-1 -1 -1] [1 1 1] [-1 -1 -1]])
+
 
 (defn todo  []
   (logic/run 1 [q]
@@ -94,7 +102,7 @@
       (logic/permuteo [C1 B1 A1
                        C2 B2 A2
                        C3 B3 A3]
-                      (map #(map (fn [v] (+ v 10)) %1) naive-test)) 
+                      (map #(map (fn [v] (+ v 1)) %1) key-test)) 
 
       (logic/permuteo C1 [n1 n2 n3])
       (logic/permuteo C2 [n4 n5 n6])
@@ -122,14 +130,37 @@
                n4 n5 n6
                n7 n8 n9
                
-               (fd/interval 0 20))
+               (fd/interval 0 2))
 
+        ;; B1
         (logic/membero i1 B1)
         (logic/membero i4 B1)
+        ;; B2
+        (logic/membero i5 B2)
+        (logic/membero i8 B2)
+        ;; B3
+        (logic/membero i2 B3)
+        (logic/membero i7 B3)
+        ;; A1
+        (logic/membero i3 A1)
         
         (fd/eq
-         (= (+ n1 i1) 20)
-         (= (+ n4 i4) 20))        
+         ;; B1
+         (= (+ n1 i1) 2) 
+         (= (+ n4 i4) 2) 
+         ;; B2
+         (= (+ n5 i5) 2)
+         (= (+ n8 i8) 2)
+         ;; B3
+         (= (+ n2 i2) 2)
+         (= (+ n7 i7) 2)
+         ;; A1
+         (= (+ n3 i3) 2)
+         ;; A2
+         (= (+ 6 i6) 2)
+         ;; A3
+         (= (+ n9 i9) 2)
+         )        
         
         (logic/== q {:c [C1 C2 C3]
                      :b [B1 B2 B3]
@@ -144,81 +175,6 @@
 
                                B3 {C1 {n3 i3}
                                    C3 {n7 i7}}}})))))
-
-
-naive-test
-
-        (logic/permuteo B1 [i1 i4 x1])
-        (logic/permuteo B2 [i5 i8 x2])
-        (logic/permuteo B3 [i2 i7 x3])
-
-        (logic/permuteo A1 [i3 x4 x5])
-        (logic/permuteo A2 [i6 x6 x7])
-        (logic/permuteo A3 [i9 x8 x9])
-
-
-(fd/eq
-         ;; B1
-         (= (+ n1 i1) 20)
-         (= (+ n4 i4) 20)
-         ;; B2
-         (= (+ n5 i5) 20)
-         (= (+ n8 i8) 20))
-
-(todo)
-
-(fd/in i1 i2 i3
-               i4 i5 i6
-               i7 i8 i9
-               
-               n1 n2 n3
-               n4 n5 n6
-               n7 n8 n9
-
-               (fd/interval 0 (* 2 variance)))
-        
-        (fd/eq
-         (= (+ i1 n1) (* 2 variance))
-         (= (+ i4 n4) (* 2 variance))
-
-         (= (+ i5 n5) (* 2 variance))
-         (= (+ i8 n8) (* 2 variance))
-
-         (= (+ i2 n2) (* 2 variance))
-         (= (+ i7 n7) (* 2 variance))
-         
-         (= (+ i3 n3) (* 2 variance))
-
-         (= (+ i6 n6) (* 2 variance))
-         
-         (= (+ i9 n9) (* 2 variance)))
-
-({:c [(20 20 12) (8 7 9) (20 11 18)],
-  :b [(20 20 15) (6 5 4) (13 20 14)],
-  :a [(20 20 17) (2 1 3) (19 16 20)],
-  
-  :details {(20 20 15) {(20 20 12) {20 0},
-                        (8 7 9) {8 12}},
-
-            (6 5 4) {(8 7 9) {7 13},
-                     (20 11 18) {11 9}},
-
-            (13 20 14) {(20 20 12) {12 0},
-                        (20 11 18) {20 0}}}})
-
-
-;;ERROR 0
-({:c [(2 1 4) (2 6 4) (5 5 2)],
-  :b [(5 2 2) (5 0 6) (0 5 2)],
-  :a [(2 1 5) (2 6 1) (1 4 0)],
-  :details {(5 2 2) {(2 1 4) {2 4},
-                     (2 6 4) {2 4}},
-            
-            (5 0 6) {(2 6 4) {6 0},
-                     (5 5 2) {5 1}}, ;; these two two numbers add indeed up to 6, but they are NOT ON [5 0 6]! (n8 i8) | (5 1) ... b2 <> c2
-
-            (0 5 2) {(2 1 4) {4 0},
-                     (5 5 2) {5 0}}}})
 
 
 
