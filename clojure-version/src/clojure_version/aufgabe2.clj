@@ -96,25 +96,23 @@
                        C3 B3 A3]
                       (map #(map (fn [v] (+ v 10)) %1) naive-test)) 
 
-      (logic/== C1 [n1 n2 n3])
-      (logic/== C2 [n4 n5 n6])
-      (logic/== C3 [n7 n8 n9])
+      (logic/permuteo C1 [n1 n2 n3])
+      (logic/permuteo C2 [n4 n5 n6])
+      (logic/permuteo C3 [n7 n8 n9])
 
       (logic/fresh [i1 i2 i3
                     i4 i5 i6
-                    i7 i8 i9
+                    i7 i8 i9]
 
-                    x1 x2 x3
-                    x4 x5 x6
-                    x7 x8 x9]
 
-        (logic/permuteo B1 [i1 i4 x1])
-        (logic/permuteo B2 [i5 i8 x2])
-        (logic/permuteo B3 [i2 i7 x3])
+        (macro/symbol-macrolet [_ (logic/lvar)]
+                               (logic/permuteo B1 [i1 i4 _])
+                               (logic/permuteo B2 [i5 i8 _])
+                               (logic/permuteo B3 [i2 i7 _])
 
-        (logic/permuteo A1 [i3 x4 x5])
-        (logic/permuteo A2 [i6 x6 x7])
-        (logic/permuteo A3 [i9 x8 x9])
+                               (logic/permuteo A1 [i3 _ _])
+                               (logic/permuteo A2 [i6 _ _])
+                               (logic/permuteo A3 [i9 _ _]))
 
         (fd/in i1 i2 i3
                i4 i5 i6
@@ -123,15 +121,15 @@
                n1 n2 n3
                n4 n5 n6
                n7 n8 n9
-
-               x1 x2 x3
-               x4 x5 x6
-               x7 x8 x9
                
                (fd/interval 0 20))
 
+        (logic/membero i1 B1)
+        (logic/membero i4 B1)
+        
         (fd/eq
-         (= (+ n1 i1) 20))        
+         (= (+ n1 i1) 20)
+         (= (+ n4 i4) 20))        
         
         (logic/== q {:c [C1 C2 C3]
                      :b [B1 B2 B3]
@@ -147,12 +145,17 @@
                                B3 {C1 {n3 i3}
                                    C3 {n7 i7}}}})))))
 
-({:c [(20 20 12) (8 7 9) (20 11 18)],
-  :b [(20 20 15) (6 5 4) (13 20 14)],
-  :a [(20 20 17) (2 1 3) (19 16 20)],
-  :details {(20 20 15) {(20 20 12) {20 20}, (8 7 9) {8 20}}, (6 5 4) {(8 7 9) {7 6}, (20 11 18) {11 5}}, (13 20 14) {(20 20 12) {12 20}, (20 11 18) {20 20}}}})
 
 naive-test
+
+        (logic/permuteo B1 [i1 i4 x1])
+        (logic/permuteo B2 [i5 i8 x2])
+        (logic/permuteo B3 [i2 i7 x3])
+
+        (logic/permuteo A1 [i3 x4 x5])
+        (logic/permuteo A2 [i6 x6 x7])
+        (logic/permuteo A3 [i9 x8 x9])
+
 
 (fd/eq
          ;; B1
