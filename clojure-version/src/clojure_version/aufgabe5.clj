@@ -13,13 +13,11 @@
              (map #(clojure.string/split %1 #" "))
              (map (fn [_] (remove #(= %1 "") _)))
              (map #(map read-string %1)))
-        input (with-open [rdr (clojure.java.io/reader (io/resource "clojure_version/aufgabe5sample3.txt"))]
+        input (with-open [rdr (clojure.java.io/reader (io/resource "clojure_version/aufgabe5sample.txt"))]
                 (reduce conj [] (line-seq rdr)))]
     (transduce hey conj [] input)))
 
 (def data (map-indexed (fn [i v] [i v]) (rest input)))
-
-;; {:per-column [[...] [...] [...]] :f #{...} :s #{...} :l #{...}}
 
 (defn description
   [data]
@@ -32,6 +30,8 @@
         second-wish (set/difference (second uniques) (first uniques))
         third-wish   (set/difference (last uniques) (set/union (second uniques) (first uniques)))]
     {:per-column per-column :f first-wish :s second-wish  :l third-wish}))
+
+(structure data)
 
 (defn structure
   ;; this maps each UNIQUE VARIABLE with its indexes of ocurrence on the each COLUMN
@@ -63,16 +63,33 @@
    pool       ;; the group of possible coordinates [[a b c] [d e f ...] ...] There is one group of indexes for each variable.
    cond1      ;; If I choose indexes out of pool such that at the end I covered all the possibilities of another variable, 
    cond2]     ;; then it is a good configuration...
-  (let [vars (repeatedly (count pool) logic/lvar)]  ;; I need ONE OUT OF EACH COLL of possible indexes... 
+  (let [vars (repeatedly (count pool) logic/lvar)  ;; I need ONE OUT OF EACH COLL of possible indexes... 
+        S (map #(remove (fn [_] (= _ nil)) %1) (Superset [] vars))]  
     (logic/run 1 [q]
 
       (rec-membero vars pool)
 
-      (macro/symbol-macrolet [S (map #(remove (fn [_] (= _ nil)) %1) (Superset [] vars))]
-                             (fd/<= (count (remove #(not-membero S %1) cond1)) parameter)  ;; this is for continuing trying with other values
-                             (fd/<= (count (remove #(not-membero S %1) cond2)) parameter)) ;; " "
       
-      (logic/== q vars))))
+      (logic/== q {:answer vars
+                   :Superset S
+                   :cond1 cond1
+                   :cond2 cond2}))))
+
+(rec-notmembero cond1 S)  ;; this is for continuing trying with other values
+(rec-notmembero cond2 S)   ;; " "
+
+
+(find-configuration 0
+                    (map second (first (structure data)))  ;; pool
+                    (map second (second (structure data))) ;; cond1
+                    (map second (last (structure data)))   ;; cond2 
+                    )
+
+(defn find-configuration-test
+  [n pool cond1 cond2]
+  (let [qs (repeatedly (count pool) logic/lvar)]
+    (logic/run 1 [q]
+      ())))
 
 ;; this is going to search for the coordinates (indexes) which should be marked in order to NOT BLOCK other unique variables...
 ;; When finding the first configuration, I must take care of not blocking the NEXT OTHER TWO COLUMNS.
@@ -109,18 +126,27 @@
 
 (logic/defne rec-notmembero
   [l coll]
+  ;; ANY member of coll is a member of l... sort of negation of membero |
   ([_ []])
   ([_ [?x . ?r]]   
    (not-membero ?x l)
    (rec-notmembero l ?r)))
 
+(logic/run 1 [q]
+  (not-membero [2 1 3] [[1 2 q]]))
+
+;; THE REAL IMPORTANT QUESTION IS HOW TO PROVE THAT [A B C] == [B C A]
+
 (logic/defne not-membero [x l]
   ([_ []])
   ([_ [?y . ?r]]
-   (logic/fresh [h]  ;; when working with lists...
-     (logic/permuteo h x)
-     (logic/!= h ?y))
+   (logic/!= x ?y)
    (not-membero x ?r)))
+
+(logic/fresh [h j]  ;; when working with lists...
+     (logic/permuteo h x)
+     (logic/permuteo j ?y)
+     (logic/!= h ?y))
 
 (defn Superset
   [c set]
@@ -140,7 +166,7 @@
 (def first-column-pairing {(:f (description data)) (first (zeta 0 data first second))})
 
 ;; And this are the rows/kids left for the next pairing
-(def after-first-column-pairing (substract data (first (zeta 0 data first second))))
+(def after-first-column-pairing (substract data (first (zeta 0 data first last))))
 
 ;; Now I must do exactly the same... there are some unique variables on the second column.
 ;; And I must cross them so that the other unique variables on the third column can still be crossable.
