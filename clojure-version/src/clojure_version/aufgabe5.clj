@@ -69,17 +69,20 @@
 
       (rec-membero vars pool)
 
+      (macro/symbol-macrolet [a (count (filter (fn [c] (membero-coll c S)) cond1))
+                              b (count (filter (fn [c] (membero-coll c S)) cond2))]
+                             (fd/eq
+                              (<= a parameter)
+                              (<= b parameter))) 
       
       (logic/== q {:answer vars
                    :Superset S
                    :cond1 cond1
                    :cond2 cond2}))))
 
-(rec-notmembero cond1 S)  ;; this is for continuing trying with other values
-(rec-notmembero cond2 S)   ;; " "
 
 
-(find-configuration 0
+(find-configuration 2
                     (map second (first (structure data)))  ;; pool
                     (map second (second (structure data))) ;; cond1
                     (map second (last (structure data)))   ;; cond2 
@@ -132,10 +135,10 @@
    (not-membero ?x l)
    (rec-notmembero l ?r)))
 
-(logic/run 1 [q]
-  (not-membero [2 1 3] [[1 2 q]]))
-
-;; THE REAL IMPORTANT QUESTION IS HOW TO PROVE THAT [A B C] == [B C A]
+(logic/defne ==coll
+  [coll1 coll2]
+  ([_ _]
+   (logic/permuteo coll1 coll2)))
 
 (logic/defne not-membero [x l]
   ([_ []])
@@ -143,10 +146,15 @@
    (logic/!= x ?y)
    (not-membero x ?r)))
 
-(logic/fresh [h j]  ;; when working with lists...
-     (logic/permuteo h x)
-     (logic/permuteo j ?y)
-     (logic/!= h ?y))
+(logic/defne membero-coll
+  [coll1 nested-coll]
+  ([_ _]
+   (logic/fresh [a]
+     (logic/membero a nested-coll)
+     (logic/permuteo a coll1))))
+
+(logic/run* [q]
+  (membero-coll [1 q] [[1 2] [1 3]]))
 
 (defn Superset
   [c set]
