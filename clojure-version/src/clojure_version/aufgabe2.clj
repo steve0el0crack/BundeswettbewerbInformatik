@@ -102,18 +102,19 @@
 
       (logic/fresh [i1 i2 i3
                     i4 i5 i6
-                    i7 i8 i9]
+                    i7 i8 i9
 
-        ;; IT SEEMS like this macrlet block makes a new scope of itself and the goals defined here are not counted after... that means for example i1 is set to satisfy (*), but then takes whatever other value for (&)
-        (macro/symbol-macrolet [_ (logic/lvar)]
+                    x1 x2 x3
+                    x4 x5 x6
+                    x7 x8 x9]
 
-                               (logic/permuteo B1 [i1 i4 _]) ;; *
-                               (logic/permuteo B2 [i5 i8 _])
-                               (logic/permuteo B3 [i2 i7 _])
+        (logic/permuteo B1 [i1 i4 x1])
+        (logic/permuteo B2 [i5 i8 x2])
+        (logic/permuteo B3 [i2 i7 x3])
 
-                               (logic/permuteo A1 [i3 _ _])
-                               (logic/permuteo A2 [i6 _ _])
-                               (logic/permuteo A3 [i9 _ _]))
+        (logic/permuteo A1 [i3 x4 x5])
+        (logic/permuteo A2 [i6 x6 x7])
+        (logic/permuteo A3 [i9 x8 x9])
 
         (fd/in i1 i2 i3
                i4 i5 i6
@@ -122,16 +123,15 @@
                n1 n2 n3
                n4 n5 n6
                n7 n8 n9
+
+               x1 x2 x3
+               x4 x5 x6
+               x7 x8 x9
                
                (fd/interval 0 20))
 
         (fd/eq
-         ;; B1
-         (= (+ n1 i1) 20) ;; &
-         (= (+ n4 i4) 20)
-         ;; B2
-         (= (+ n5 i5) 20)
-         (= (+ n8 i8) 20))
+         (= (+ n1 i1) 20))        
         
         (logic/== q {:c [C1 C2 C3]
                      :b [B1 B2 B3]
@@ -146,6 +146,21 @@
 
                                B3 {C1 {n3 i3}
                                    C3 {n7 i7}}}})))))
+
+({:c [(20 20 12) (8 7 9) (20 11 18)],
+  :b [(20 20 15) (6 5 4) (13 20 14)],
+  :a [(20 20 17) (2 1 3) (19 16 20)],
+  :details {(20 20 15) {(20 20 12) {20 20}, (8 7 9) {8 20}}, (6 5 4) {(8 7 9) {7 6}, (20 11 18) {11 5}}, (13 20 14) {(20 20 12) {12 20}, (20 11 18) {20 20}}}})
+
+naive-test
+
+(fd/eq
+         ;; B1
+         (= (+ n1 i1) 20)
+         (= (+ n4 i4) 20)
+         ;; B2
+         (= (+ n5 i5) 20)
+         (= (+ n8 i8) 20))
 
 (todo)
 
