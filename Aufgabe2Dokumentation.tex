@@ -1,0 +1,261 @@
+\documentclass[11pt, oneside]{article}   	% use "amsart" instead of "article" for AMSLaTeX format
+\usepackage{geometry}                		% See geometry.pdf to learn the layout options. There are lots.
+\usepackage{eurosym}
+\geometry{letterpaper}                   		% ... or a4paper or a5paper or ... 
+%\geometry{landscape}                		% Activate for for rotated page geometry
+%\usepackage[parfill]{parskip}    		% Activate to begin paragraphs with an empty line rather than an indent
+\usepackage{graphicx}	
+
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{systeme}
+\usepackage{mathabx}
+\usepackage{siunitx}
+\usepackage{chemfig}
+\usepackage{float}
+\usepackage{tikz}
+\usepackage{tkz-euclide}
+\usetikzlibrary{angles,quotes}
+\usepackage{subcaption}
+\usepackage{afterpage}
+
+\usepackage[section]{minted}
+\renewcommand{\baselinestretch}{1.5}
+
+\renewcommand{\MintedPygmentize}{/Users/estebancastillo/Library/Python/2.7/bin/pygmentize}
+
+\renewcommand{\baselinestretch}{1.5}
+
+\title{\textbf{Aufgabe 5: Writer-Dokument}}
+\author{Team-ID: 00000 \\ Team-Name: Name \\ Bearbeiter/-innen dieser Aufgabe: \\ Emilis Guzys \\ Leonard Kraus \\ C. V. Esteban}
+
+\begin{document}
+
+\textbf{}
+
+\maketitle
+
+\tableofcontents
+
+\addcontentsline{toc}{section}{L\"osungsidee}
+\section*{L\"osungsidee}
+Man kann dieses Problem zu vereinfachen versuchen. Erstmal sieht so aus, als ob man musste ein Subgraph finden: Die kanten entsprechen die M\"oglichkeit 2 Dreiecken zu verbinden und nat\"urlich sind die Knoten die Dreiecke. Aber das reicht nicht um ein effizientes Algorithm zu programmieren. Wenn man auf dieser Ebene geblieben w\"are, dann m\"usste man einfach \textbf{alle} Kombinationen bzw. Wege durchlaufen und gucken ob es einer gibt, die bestimmte Eigenschaften hat. Das klingt wie eine logische Maschine wie bei der Aufgabe 5. Dennoch glaubten wir dass es eine besser L\"osung geben muss. \\
+Vielleicht w\"are es hilfreich die Suche in Teilen machen: Man kann das gro{\ss}es Dreieck nicht nur als eine Sache betrachten, aber viele verschiedene suzammen... ein Hexagon und 3 kleine Dreiecke mit 4 Teilen. Das w\"are ein besseres Ausgangspunkt. Wir haben versucht, diese komplexe Methode zu implementieren aber unseres \textit{amateur} Programmierensniveau und andere Sachen haben es uns leider verhindert. Core.logic ist immer noch \textbf{an entwickeln} und \textit{constraint programming} ist ein nicht gew\"ohnliches Verfahren allt\"gliche Sachen zu programmieren (au{\ss}er manche Aussnahmen, wie \textit{Datomic queries}). Also, halten wie uns lieber daran, was machtbar ist.
+
+\addcontentsline{toc}{section}{Umsetzung}
+\section*{Umsetzung}
+
+Es gibt nicht so viel \"uber die Umsetzung zu sagen. Der Leser weisst bescheid dass es um eine logische Maschine sich handelt, und deswegen werden eher die Regeln bzw. \textit{Constraints} erkl\"art. Wenn man das gro{\ss}es Dreieck anguckt, merkt man dass es 9 \textit{Verbindungen} gibt. Eine Verbindung wird definiert als $2$ Zahlen, die zu $2$ \textbf{verschiedene} Dreiecke geh\"oren und miteinander zu eine bestimme Zahl addieren. Warum? Weil in dieser L\"osung keine negative Zahlen benutzt werden d\"urfen (eine komische Sache von core.logic). So sind die Zahlen $-1$ und $1$ eine Verbindung weil $(-1 + a) + (1 + a) = 2a = k$ wobei $a$ das erste Nummer ist, die uns gegeben wird bzw. das interval in dem die Nummern sich befinden k\"onnten. \\
+Die na\"chste Schritt ist eigentlich die Dreiecke einstufen: Es gibt $3$ und nur $3$ Dreiecken, die sich mit $3$ anderer verbinden. Es gibt $3$ und nur $3$ Dreiecken, die sich mit $2$ anderen Dreiecken verbinden. Und zum Schluss gibt es $3$ und nur $3$ Dreiecken, die sich mit \textit{ein anderes} Dreieck verbindet. 
+Die waren alle wichtige Eigenschaften der L\"osung, die wir suchen. Jetzt zu dem Code.
+
+\addcontentsline{toc}{section}{Beispiele}
+\section*{Beispiele}
+Um die Idee genauer zu erk\"aren, wird ein vereinfachtes Beispiel \textit{"gel\"ost"}: Es geht einfach darum, 4 Dreiecken anzuordnen. 
+
+\begin{minted}{clj}
+(def test0 [[7 1 5] [2 4 6] [6 5 3] [-1 -3 -2]])
+\end{minted}
+
+Das Code um dieses Beispiel zu l\"osen ist \textit{nicht dasselbe} wie das Code, mit dem die Aufgabe tats\"chlich zu l\"osen versucht (in einem Fall gibt es nur 4 Teilen und in dem anderen gibt es 9... das sollte keine gro{\ss}e Unterschied, aber bei ist doch). In der \textit{Quellcode} Abteilung findet man das Code um diese \textit{"subaufgabe"} zu l\"osen. Also, das Program bzw. die Idee funktioniert und ergibt folgendes als Antwort.
+
+\begin{minted}{clj}
+(comment
+  {:A (14 8 12),  ;; [7 1 5]
+   :B (13 12 10), ;; [6 5 3]
+   :C (9 11 13),   ;; [2 4 6]
+   ;; D [-1 -3 -2]
+   :details {(6 4 5) {(14 8 12) {:c1 6,  ;; ... {-1 1}
+                                 :x2 8},
+                      (13 12 10) {:x6 10, ;; ... {3 -3}
+                                  :c2 4},
+                      (9 11 13) {:x7 9,   ;; ... {2 -2}
+                                :c3 5}}}})
+                                
+                             
+\end{minted}
+
+Das n\"achstes Beispiel ist das \textit{n\"achstes Niveau}. Dennoch verwenden wir hier auch ein eigenes Beispiel, weil \textit{die Beispieldateien} zu schwer sind bzw. zu lange dauern. Das ist der Hauptgrund, warum seit ganz Anfang eine \textbf{"schlaue"} Art und Weise versucht wird; die Suche zu minimalisieren... bessere \textbf{constratints}. Alleine dieses naives Beispiel dauert 56 Sekunden zu l\"osen und das ist auf jeden Fall nicht optimal.
+
+\begin{minted}{clj}
+(def test2
+  [[-1 -1 -1] [1 1 1] [-1 -1 -1]
+   [-1 -1 -1] [1 1 1] [-1 -1 -1]
+   [-1 -1 -1] [1 1 1] [-1 -1 -1]])
+\end{minted}
+
+\begin{minted}{clj}
+({:c [(2 2 2) (2 2 2) (2 2 2)], 
+  :b [(0 0 0) (0 0 0) (0 0 0)],
+  :a [(0 0 0) (0 0 0) (0 0 0)],
+  :details {:B1-C1 {2 0},
+            :B1-C2 {2 0},
+            :B2-C2 {2 0},
+            :B2-C3 {2 0},
+            :B3-C1 {2 0},
+            :B3-C3 {2 0}}})
+\end{minted}
+
+Also, direkt nach der Beendung der L\"osungsidee und Umsetuzung als Code merkten wir dass es etwas gab, das nicht v\"ollig stimmt. Deswegen wurde unser Hauptaufgabe zu \textbf{beweisen} ob dieses Verfahren/Algorithm \"uberhaupt funktioniert oder nicht. Mit den oben gezeigte Beispielen ist es bewiesen dass das Problem nicht an dem Verfahren selbst liegt, sonder an unsere F\"ahigkeit und Herrschaft \"uber das Paradigm von Logischen Programmierung. 
+
+\addcontentsline{toc}{section}{Quellcode}
+\section*{Quellcode}
+
+Die Funktion $test-todo$ ist f\"ur das Beispiel mit 4 Klein Dreiecken gedacht; und die Funktion $start$ f\"ur die wirkliche Aufgabe.
+
+\begin{minted}{clj}
+(defn test-todo []
+  (logic/run 1 [q]
+    (logic/fresh [A B C D] 
+
+      (logic/permuteo [A B C D] (map #(map (fn [v] (+ v 7)) %1) test0))
+
+      (logic/fresh [x1 x2 x3
+                    x4 x5 x6
+                    x7 x8 x9]
+
+        (logic/permuteo [x1 x2 x3] A)
+        (logic/permuteo [x4 x5 x6] B)
+        (logic/permuteo [x7 x8 x9] C)
+
+        (logic/fresh [c1 c2 c3]
+          (logic/permuteo [c1 c2 c3] D)
+
+          (fd/in x2 x6 x7
+                 c1 c2 c3
+                 (fd/interval 0 14))
+
+          (fd/eq
+           (= (+ c1 x2) 14)
+           (= (+ c2 x6) 14)
+           (= (+ c3 x7) 14))
+          
+          (logic/== q {:A A
+                       :B B
+                       :C C
+                       :details {D {A {:c1 c1
+                                       :x2 x2}
+                                    B {:x6 x6
+                                       :c2 c2}
+                                    C {:x7 x7
+                                       :c3 c3}}}}))))))
+\end{minted}
+
+\begin{minted}{clj}
+(defn start
+  [triangles shift]
+  (let [h (* 2 shift)]
+   (logic/run 1 [q]
+     (logic/fresh [n1 n2 n3
+                   n4 n5 n6
+                   n7 n8 n9
+                   
+                   C1 B1 A1
+                   C2 B2 A2
+                   C3 B3 A3]
+       
+       (logic/permuteo [C1 B1 A1
+                        C2 B2 A2
+                        C3 B3 A3]
+                       (map #(map (fn [v] (+ v shift)) %1) triangles)) 
+
+       (logic/membero C1 [[n1 n2 n3]
+                          [n3 n1 n2]
+                          [n2 n3 n1]])
+       (logic/membero C2 [[n4 n5 n6]
+                           [n6 n4 n5]
+                           [n5 n6 n4]])
+       (logic/membero C3 [[n7 n8 n9]
+                           [n9 n7 n8]
+                           [n8 n9 n7]])
+
+       (logic/fresh [i1 i2 i3
+                     i4 i5 i6
+                     i7 i8 i9]
+
+
+         (macro/symbol-macrolet [_ (logic/lvar)]
+                                (logic/permuteo B1 [[i1 i4 _]
+                                                    [i1 i4 _]
+                                                    [i1 i4 _]])
+                                (logic/permuteo B2 [i5 i8 _]
+                                                [i1 i4 _]
+                                                [i1 i4 _])
+                                (logic/permuteo B3 [i2 i7 _]
+                                                [i1 i4 _]
+                                                [i1 i4 _])
+
+                                (logic/permuteo A1 [i3 _ _])
+                                (logic/permuteo A2 [i6 _ _])
+                                (logic/permuteo A3 [i9 _ _]))
+         (macroexpand-1 '(macro/symbol-macrolet [_ (logic/lvar)]
+                                (logic/permuteo B1 [i1 i4 _])
+                                (logic/permuteo B2 [i5 i8 _])
+                                (logic/permuteo B3 [i2 i7 _])
+
+                                (logic/permuteo A1 [i3 _ _])
+                                (logic/permuteo A2 [i6 _ _])
+                                (logic/permuteo A3 [i9 _ _])))
+
+         (fd/in i1 i2 i3
+                i4 i5 i6
+                i7 i8 i9
+
+                n1 n2 n3
+                n4 n5 n6
+                n7 n8 n9
+                
+                (fd/interval 0 2))
+
+         ;; B1
+         (logic/membero i1 B1)
+         (logic/membero i4 B1)
+         ;; B2
+         (logic/membero i5 B2)
+         (logic/membero i8 B2)
+         ;; B3
+         (logic/membero i3 B3)
+         (logic/membero i7 B3)
+
+         ;; A1
+         (logic/membero i3 A1)
+         ;; A2
+         (logic/membero i6 A2)
+         ;; A3
+         (logic/membero i9 A3)
+         
+         (fd/eq
+          ;; B1
+          (= (+ n1 i1) h) ;; - C1
+          (= (+ n4 i4) h) ;; - C2
+          ;; B2
+          (= (+ n5 i5) h) ;; - C2
+          (= (+ n8 i8) h) ;; - C3
+          ;; B3
+          (= (+ n3 i3) h) ;; - C1
+          (= (+ n7 i7) h) ;; - C3
+          
+          ;; A1
+          (= (+ n3 i3) h)
+          ;; A2
+          (= (+ n6 i6) h)
+          ;; A3
+          (= (+ n9 i9) h))        
+         
+         (logic/== q {:c [C1 C2 C3]
+                      :b [B1 B2 B3]
+                      :a [A1 A2 A3]
+                      :details {:B1-C1 {n1 i1}
+                                :B1-C2 {n4 i4}
+                                
+                                :B2-C2 {n5 i5}
+                                :B2-C3 {n8 i8}
+                                
+                                :B3-C1 {n3 i3}
+                                :B3-C3 {n7 i7}}}))))))
+\end{minted}
+
+\textbf{Das ganzes Quellcode} kann man unter das GitHub Repository \textit{BundeswettbewerbIn-
+formatik} von dem User \textit{steve0el0crack} finden.
+
+\end{document}
